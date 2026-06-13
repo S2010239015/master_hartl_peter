@@ -1,0 +1,24 @@
+\chapter{Vergleichsmatrix}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{5.2cm}ccc}
+\hline
+\textbf{Kriterium} & \textbf{CyberRangeCZ} & \textbf{OCR} & \textbf{KYPO} \\
+\hline
+\textbf{K1 Reproduzierbarkeit \& Wiederholbarkeit}      & \cmark & \cmark & \cmark \\
+\textbf{K2 Automatisierung \& Lifecycle-Steuerung}       & \cmark & $\sim$ & \cmark \\
+\textbf{K3 Integrationsfähigkeit externer Werkzeuge}     & $\sim$ & ?      & ?      \\
+\textbf{K4 Beobachtbarkeit \& Datenzugang}                    & \cmark & ? & \cmark \\
+\textbf{K5 Zugriffsmöglichkeiten \& Nutzerinteraktion}   & \cmark & ?      & \cmark \\
+\textbf{K6 Benutzer-, Rollen- \& Rechteverwaltung}       & \cmark & \cmark & \cmark \\
+\textbf{K7 Wartbarkeit, Dokumentation \& Community}      & \cmark & $\sim$ & \xmark \\
+\hline
+\end{tabular}
+\caption{Vergleichsmatrix der Plattformen anhand der Kriterien K1--K7 (\cmark\ erfüllt, $\sim$ teilweise erfüllt, \xmark\ nicht erfüllt, ? offen).}
+\label{tab:plattformvergleich-matrix}
+\end{table}
+Die Vergleichsmatrix in Tabelle~\ref{tab:plattformvergleich-matrix} zeigt, dass CyberRangeCZ im Vorprojekt in mehreren für die spätere Masterarbeit zentralen Kriterien bereits nachweisbar stark abschneidet. Insbesondere die praktische Erprobung im PoC belegt einen hohen Grad an Automatisierung und Lifecycle-Steuerung (K2) sowie praktikable Zugriffsmöglichkeiten und Nutzerinteraktion (K5). Auch Aspekte des Mehrbenutzerbetriebs und der Zugriffskontrolle (K6) sind durch die vorhandenen Plattformkomponenten und das Portal-Konzept klar adressiert. Zusammen mit der umfangreichen Dokumentation und aktiven Weiterentwicklung (K7) reduziert dies das Umsetzungsrisiko für die Masterarbeit.
+
+KYPO erfüllt konzeptionell ebenfalls wesentliche Anforderungen, insbesondere hinsichtlich reproduzierbarer Umgebungen und automatisierter Bereitstellung (K1, K2), basiert jedoch auf einer älteren technischen Architektur und wird im Projektkontext zunehmend durch CyberRangeCZ abgelöst. Dadurch entsteht im Vergleich ein Nachhaltigkeitsrisiko (K7), das für eine längerfristige Forschungsumgebung in einer Masterarbeit relevant ist. OCR verfolgt einen modularen, standardorientierten Ansatz , jedoch konnten zentrale Punkte im Vorprojekt nicht in gleicher Tiefe praktisch verifiziert werden. Entsprechend werden einzelne Kriterien als \emph{teilweise erfüllt} bzw.\ \emph{offen} bewertet. Dies betrifft vor allem die konkrete technische Bereitstellung einer vollständigen Übungskette im PoC sowie die daraus ableitbare Beurteilung einzelner Betriebs- und Zugriffsaspekte. Zusätzlich wirkt die verfügbare Dokumentation im Vergleich weniger umfassend und die Community-Aktivität bzw.\ der Austausch über Support-Kanäle ist weniger ausgeprägt, was die Fehlersuche und den Wissenstransfer im Implementierungsprozess potenziell erschwert.

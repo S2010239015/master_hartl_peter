@@ -1,0 +1,190 @@
+\chapter{Technische Erkundung: Proof-of-Concept mit CyberRangeCZ}
+\label{chap:technische-erkundung}
+
+Ziel der technischen Erkundung war es, die grundsätzliche Machbarkeit einer selbst betriebenen
+Cyber-Range-Plattform im Sinne der späteren Masterarbeit zu überprüfen. Im Fokus stand dabei
+kein umfassender Produktivbetrieb, sondern ein \emph{Proof-of-Concept} (PoC), der zentrale
+Abläufe demonstriert: Installation und Deployment der Plattform, Erstzugriff über die Weboberflächen,
+Import einer Trainingsdefinition, Bereitstellung einer Sandbox sowie der Zugriff auf die bereitgestellten
+Systeme.
+
+Für den PoC wurde die CyberrangeCZLite-Variante verwendet, da sie einen schnellen Einstieg in die
+Plattformmechanik ermöglicht und zugleich die wesentlichen Konzepte (Portal, Trainingsdefinitionen,
+Pools, Sandboxes) abbildet \cite{CyberRangeCZDevopsLite}.
+
+\section{Testumgebung}
+\label{sec:poc-testumgebung}
+
+Der PoC wurde auf einer dedizierten Maschine mit Ubuntu 24.04 LTS durchgeführt. Die verwendeten
+Ressourcen (CPU, RAM und Storage) sind in Abbildung~\ref{fig:poc-hardware} dargestellt.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{poc_hardware.png}
+    \caption{Testumgebung für den PoC (eigene Aufnahme)}
+    \label{fig:poc-hardware}
+\end{figure}
+
+\section{Installation und Deployment der PoC-Umgebung}
+\label{sec:poc-installation}
+
+Die Installation folgt dem Ansatz, notwendige Virtualisierungs- und Container-Komponenten
+lokal bereitzustellen und das eigentliche Deployment über das bereitgestellte PoC-Repository
+automatisiert auszuführen. Dazu wurden zunächst Basiswerkzeuge sowie KVM/libvirt und Docker
+installiert. KVM/libvirt stellt die Virtualisierungsbasis bereit (VM-Lifecycle und Netzwerk),
+während Docker genutzt wird, um eine vorbereitete Umgebung auszuführen, in der eine vagrant
+mit libvirt-Anbindung zur Provisionierung verwendet wird.
+
+\begin{verbatim}
+sudo apt install -y \
+  git tmux curl \
+  qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils cpu-checker \
+  docker.io
+\end{verbatim}
+
+Im nächsten Schritt wurden die relevanten Dienste aktiviert und der Benutzer für die Verwendung von
+\texttt{libvirt}, KVM und Docker berechtigt. Damit wird erreicht, dass Virtualisierung und Containerbetrieb
+ohne ständige Root-Kontexte nutzbar sind.
+
+\begin{verbatim}
+sudo systemctl enable --now libvirtd docker
+sudo usermod -aG libvirt,kvm,docker $USER
+newgrp docker
+\end{verbatim}
+
+Anschließend wurde das PoC-Repository geklont und die libvirt-URI gesetzt, sodass Vagrant eindeutig
+die System-libvirt-Instanz adressiert. Zur langlebigen Durchführung lange Laufzeit, viele Ausgaben
+wurde der Prozess in einer tmux-Session gestartet.
+
+\begin{verbatim}
+git clone https://github.com/cyberrangecz/devops-crczp-lite.git
+cd devops-crczp-lite
+export LIBVIRT_DEFAULT_URI=qemu:///system
+tmux new -s crczp
+\end{verbatim}
+
+Das eigentliche Deployment erfolgt über einen Docker-Container, der Vagrant mit libvirt-Unterstützung
+bereitstellt. Die relevanten Sockets und Verzeichnisse werden in den Container gemountet, damit Vagrant
+(1) auf libvirt zugreifen kann, (2) seine Vagrant-States dauerhaft speichern kann und (3) im aktuellen
+Arbeitsverzeichnis die Definitionsdateien findet. Der Parameter --network host stellt sicher, dass
+Netzwerkoperationen und lokale Zugriffe (z.\,B. auf die Weboberfläche) ohne zusätzliche Container-NAT-
+Komplexität funktionieren.
+
+\begin{verbatim}
+docker run -it --rm \
+  -e LIBVIRT_DEFAULT_URI \
+  -v /var/run/libvirt/:/var/run/libvirt/ \
+  -v ~/.vagrant.d:/.vagrant.d \
+  -v $(realpath "${PWD}"):${PWD} \
+  -w "${PWD}" \
+  --network host \
+  vagrantlibvirt/vagrant-libvirt:latest \
+  vagrant up
+\end{verbatim}
+
+Nach erfolgreichem Abschluss wurde eine URL für das Web-Portal sowie initiale Zugangsdaten ausgegeben.
+Diese Ausgabe ist in Abbildung~\ref{fig:poc-deploy} dokumentiert. 
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\linewidth]{poc_deploy_done.png}
+    \caption{Erfolgreiches Deployment der PoC-Umgebung (eigene Aufnahme)}
+    \label{fig:poc-deploy}
+\end{figure}
+
+\section{Erstzugriff über Keycloak und CyberRangeCZ-Portal}
+\label{sec:poc-webzugriff}
+
+CyberRangeCZ verwendet für Authentifizierung und Benutzer-/Client-Verwaltung typischerweise
+Keycloak als Identity- und Access-Management-Komponente. Der erfolgreiche Zugriff auf die
+Keycloak-Verwaltungskonsole bestätigt, dass die Authentifizierungs- und Basisdienste funktionsfähig
+bereitgestellt wurden (Abbildung~\ref{fig:poc-keycloak}).
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{poc_keycloak.png}
+    \caption{Keycloak-Verwaltungskonsole der PoC-Installation(eigene Aufnahme)}
+    \label{fig:poc-keycloak}
+\end{figure}
+
+Der zentrale Einstiegspunkt für Trainings- und Sandbox-Management ist das CyberRangeCZ Platform Portal.
+Abbildung~\ref{fig:poc-portal} zeigt die Startseite und zeigt die wichtigsten Funktionen,
+u.\,a.\ Trainingsdefinitionen, Trainingsinstanzen, Sandboxes, Pools sowie Benutzer- und Gruppenverwaltung.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{poc_portal_home.png}
+    \caption{CyberRangeCZ Platform Portal (Startseite) nach erfolgreichem Login(eigene Aufnahme)}
+    \label{fig:poc-portal}
+\end{figure}
+
+\section{Import einer Trainingsdefinition und Provisionierung einer Sandbox}
+\label{sec:poc-training-import}
+
+Um die Kernfunktionalität der Plattform zu validieren, wurde eine Beispiel-Trainingsbibliothek
+(\emph{library-demo-training}) aus einem Git-Repository in das Portal eingebunden \cite{CyberRangeCZLibraryDemoTraining}. Nach dem Import wurde ein Pool bzw.\ eine Trainingsinstanz erstellt und die Sandbox-Provisionierung
+ausgelöst. Die resultierende Netzwerktopologie der bereitgestellten Umgebung ist in
+Abbildung~\ref{fig:poc-topology} dargestellt.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\linewidth]{poc_topology.png}
+    \caption{Netzwerktopologie einer bereitgestellten Demo-Sandbox (eigene Aufnahme)}
+    \label{fig:poc-topology}
+\end{figure}
+
+\section{Zugriff auf die Sandbox und funktionaler Verbindungstest}
+\label{sec:poc-zugriff}
+
+Für den Zugriff auf die bereitgestellten Systeme stellt CyberRangeCZ im PoC automatisch erzeugte
+SSH-Artefakte zur Verfügung. Dazu gehören typischerweise eine Benutzer-Konfiguration sowie ein
+passender privater und öffentlicher Schlüssel. Abbildung~\ref{fig:poc-ssh-files} zeigt
+die entsprechenden Dateien, die nach der Sandbox-Provisionierung bereitgestellt wurden.
+
+Neben SSH sind in Cyber-Range-Umgebungen grundsätzlich auch weitere Zugriffsmöglichkeiten relevant,
+insbesondere wenn Trainings- oder Forschungsszenarien eine grafische Interaktion erfordern. Je nach
+Szenariodefinition kann der Zugriff daher auch über browserbasierte Oberflächen bzw.\ GUI-Zugriffe
+(z.\,B.\ über eine Web-Konsole oder Remote-Desktop-Mechanismen wie RDP/VNC/noVNC) erfolgen.
+Welche Zugriffspfade tatsächlich verfügbar sind, hängt dabei von der jeweiligen Trainingsdefinition
+und der bereitgestellten Infrastruktur ab.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\linewidth]{poc_ssh_files.png}
+    \caption{SSH-Daten für den Sandbox-Zugriff (eigene Aufnahme)}
+    \label{fig:poc-ssh-files}
+\end{figure}
+
+Zur Verifikation, dass der Zugriff auf die Sandbox tatsächlich funktioniert und Netzwerkkommunikation
+möglich ist, wurde aus der bereitgestellten Client-Umgebung ein einfacher Scan gegen das Server-System
+durchgeführt. Abbildung~\ref{fig:poc-nmap} zeigt exemplarisch, dass das Zielsystem erreichbar ist und
+SSH (Port 22) offen ist. Damit ist die grundlegende Nutzbarkeit der bereitgestellten Umgebung für
+weitere Schritte nachgewiesen.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\linewidth]{poc_nmap.png}
+    \caption{Einfacher Funktionstest innerhalb der Sandbox (eigene Aufnahme)}
+    \label{fig:poc-nmap}
+\end{figure}
+
+\section{Erkenntnisse aus dem PoC}
+\label{sec:poc-erkenntnisse}
+
+Der PoC bestätigt, dass CyberRangeCZ (in der Lite-Variante) in einer lokalen Umgebung
+installiert und betrieben werden kann und dabei zentrale Plattformmechanismen bereits sichtbar werden:
+versionierbare Trainingsdefinitionen, Portal-gestützte Verwaltung sowie automatisierte Provisionierung
+isolierter Umgebungen. Für das Vorprojekt ist insbesondere relevant, dass sich eine Trainingsdefinition
+aus einem Git-Repository importieren und anschließend reproduzierbar als Sandbox instanziieren lässt.
+
+Für die Masterarbeit ergibt sich daraus als nächster Schritt, die technische Erkundung in Richtung
+Tool-Integration zu vertiefen, d.\,h.\ konkrete Mess- und Beobachtungspunkte (Logs, Metriken,
+Netzwerkdaten) in einem Use-Case gezielt zu platzieren und den Aufwand für Integration und Vergleich
+mehrerer Sicherheits- bzw.\ Monitoring-Werkzeuge realistisch abzuschätzen.

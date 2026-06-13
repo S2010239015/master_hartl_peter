@@ -1,0 +1,120 @@
+\chapter{Begriffsabgrenzung und fachlicher Hintergrund}
+
+\section{Cyber Ranges im Kontext der IT-Sicherheitsforschung}
+
+Cyber Ranges werden in der Literatur als virtuelle, isolierte Umgebungen beschrieben,
+die dazu dienen, komplexe Cybersecurity-Szenarien unter kontrollierten Bedingungen
+nachzubilden. Sie bilden reale Angriffssituationen, Abwehrmaßnahmen sowie
+Incident-Response-Abläufe in einer simulierten Infrastruktur ab und ermöglichen damit
+die Analyse sicherheitsrelevanter Ereignisse, ohne produktive Systeme zu gefährden.
+Neben Trainingszwecken stellen Cyber Ranges auch eine Umgebung für Forschung und
+systematische Untersuchungen dar \cite[3]{IntroductionCyberRanges2022}.
+
+Im wissenschaftlichen Kontext werden Cyber Ranges häufig von klassischen Testbeds
+abgegrenzt. Während Testbeds primär auf die Untersuchung einzelner Technologien oder
+Netzwerkkonfigurationen ausgerichtet sind, zeichnen sich Cyber Ranges durch einen
+stärker szenarienorientierten Ansatz aus. Sie kombinieren Infrastruktur,
+Benutzerinteraktionen und zeitliche Abläufe innerhalb eines integrierten
+Szenariokonzepts und eignen sich dadurch für die Untersuchung komplexer,
+mehrstufiger Sicherheitsereignisse \cite[2]{Chouliaras2021}. Während Digital Twins und
+Testbeds auf Systemebene typischerweise die Abbildung und Validierung eines
+spezifischen Systems (z.\,B.\ einer Anlage) adressieren,
+dienen Cyber Ranges primär der reproduzierbaren Bereitstellung variabler Übungs- und
+Experimentierumgebungen für Angriffs-, Verteidigungs- und Evaluationsszenarien.
+
+Ursprünglich wurden Cyber Ranges vor allem für Ausbildungs- und Trainingszwecke
+entwickelt. In der Literatur wird jedoch zunehmend ihre Nutzung als
+Forschungsumgebung hervorgehoben, insbesondere wenn reproduzierbare Szenarien und
+strukturierte Bewertungsmechanismen vorgesehen sind. Durch die kontrollierte
+Durchführung identischer Szenarien können unterschiedliche Werkzeuge, Strategien oder
+Vorgehensweisen unter vergleichbaren Bedingungen untersucht werden
+\cite[2]{Chouliaras2021}.
+
+Ein wesentliches Merkmal moderner Cyber Ranges ist die Verbindung von Lern-,
+Trainings- und Validierungsaspekten innerhalb einer gemeinsamen Umgebung. Neben der
+Vermittlung praktischer Fähigkeiten ermöglichen leistungs- und szenarienbasierte
+Bewertungsansätze eine strukturierte Erfassung von Ergebnissen, die sowohl für
+Trainingszwecke als auch für wissenschaftliche Analysen genutzt werden können
+\cite[3]{IntroductionCyberRanges2022}.
+
+Zusammenfassend lassen sich Cyber Ranges als spezialisierte Forschungs- und
+Experimentierumgebungen einordnen, die über reine Ausbildungsplattformen hinausgehen.
+Insbesondere für Fragestellungen, bei denen Realismus, Kontrolle und
+Reproduzierbarkeit gleichzeitig erforderlich sind, stellen sie ein geeignetes
+Instrument dar. Diese Einordnung bildet die begriffliche Grundlage für die weiteren
+Analysen im Rahmen dieser Arbeit.
+
+\section{Abgrenzung von Trainings-, Test- und Forschungs-Cyber-Ranges}
+
+Cyber Ranges werden in der Literatur für unterschiedliche Zielsetzungen eingesetzt,
+insbesondere für Testing-, Trainings- und Forschungszwecke. Diese Einsatzbereiche
+unterscheiden sich weniger durch die zugrunde liegende technische Infrastruktur als
+vielmehr durch die Zielsetzung, Szenariogestaltung und Art der Ergebnisbewertung
+\cite[~69--76]{IntroductionCyberRanges2022}.
+
+Cyber Ranges für \emph{Testing} dienen primär der Überprüfung technischer Systeme,
+Softwarekomponenten oder Sicherheitsmechanismen. Der Fokus liegt auf der Identifikation
+von Schwachstellen, Fehlkonfigurationen oder Implementierungsfehlern innerhalb einer
+kontrollierten Umgebung. Dabei steht die technische Bewertung eines Systems im
+Vordergrund, während didaktische Aspekte oder langfristiger Erkenntnisgewinn eine
+untergeordnete Rolle spielen. Solche Testumgebungen werden häufig zeitlich begrenzt und
+zielgerichtet eingesetzt, um konkrete Fragestellungen zu beantworten
+\cite{Chouliaras2021}.
+
+Der Einsatz von Cyber Ranges für \emph{Training} verfolgt hingegen das Ziel, die
+Handlungsfähigkeit von Personen oder Teams im Umgang mit Sicherheitsvorfällen zu
+verbessern. Trainingsszenarien konzentrieren sich auf Kompetenzaufbau, Awareness sowie
+die Übung von Abläufen wie Incident Detection, Analyse und Reaktion. Der Erfolg von
+Trainings-Cyber-Ranges wird typischerweise anhand individueller oder teambezogener
+Leistungen bewertet, etwa durch Beobachtung, Feedback oder bestimmten Metriken.
+Reproduzierbarkeit ist hier zwar wünschenswert, steht jedoch nicht im Zentrum der
+Zielsetzung \cite[~71--74]{IntroductionCyberRanges2022}.
+
+Cyber Ranges für \emph{Forschung} unterscheiden sich davon grundlegend durch ihren
+Fokus auf systematischen Erkenntnisgewinn. In diesem Kontext werden Cyber Ranges als
+experimentelle Umgebungen genutzt, um Dinge zu überprüfen, Tools
+zu vergleichen und das Verhalten von Tools oder Systemen unter bestimmten Bedingungen zu
+analysieren. Zentrale Anforderungen sind dabei die Nachvollziehbarkeit der Szenarien sowie deren Reproduzierbarkeit. Ergebnisse sollen nicht nur situationsbezogen interpretiert, sondern wissenschaftlich ausgewertet und verallgemeinert werden können \cite[~74--76]{IntroductionCyberRanges2022}.
+
+Für die vorliegende Arbeit ist insbesondere diese forschungsorientierte Perspektive
+relevant. Während Trainings- und Testaspekte als notwendige Bestandteile moderner Cyber
+Ranges betrachtet werden können, liegt der Schwerpunkt auf der Nutzung von Cyber
+Ranges als reproduzierbare Forschungsumgebung. Diese Abgrenzung ist entscheidend für
+die Ableitung von Anforderungen an die Plattformauswahl sowie für die spätere
+Konzeption und Evaluation von Cyber-Resilienz-Use-Cases.
+
+
+
+\section{Cyber-Resilienz}
+
+Cyber-Resilienz erweitert klassische Sicherheitsverständnisse, die primär auf Vermeidung und
+Schutz abzielen, um die Fähigkeit von Systemen, auch unter Störungen oder Angriffen zentrale
+Funktionen aufrechtzuerhalten und sich nach einem Ereignis wieder zu stabilisieren. Linkov et al.
+stellen hierfür einen grundlegenden, metrikenorientierten Ansatz bereit und betonen, dass Resilienz
+als dynamische Systemeigenschaft zu verstehen ist, die sich über Phasen des Ereignismanagements
+beschreiben und bewerten lässt \cite[~2--3]{Linkov2013ResilienceMetrics}. In diesem Kontext
+wird Resilienz nicht als binärer Zustand („sicher/unsicher“) interpretiert, sondern als Verlauf der
+Systemleistung über die Zeit, einschließlich Abfall, Wiederherstellung und Anpassung \cite[~3--5]{Linkov2013ResilienceMetrics}.
+
+Als konzeptionellen Rahmen führen Linkov et al. eine Resilience-Matrix ein, die vier Fähigkeiten
+eines Systems integriert (plan/prepare, absorb, recover, adapt) und diese mit unterschiedlichen
+Systemdomänen kombiniert. Damit wird Cyber-Resilienz explizit mess- und vergleichbar gemacht,
+weil Kennzahlen nicht nur Präventionsmaßnahmen, sondern auch die Robustheit im Ereignisfall,
+die Wiederherstellungsfähigkeit sowie adaptive Mechanismen abbilden können \cite[~3--4]{Linkov2013ResilienceMetrics}.
+Für die vorliegende Arbeit ist diese Perspektive besonders relevant, da sie eine Brücke zwischen
+Resilienz als Konzept und der späteren Operationalisierung über Evaluationskriterien schafft.
+
+Neuere Arbeiten greifen diese Grundidee auf und verlagern den Schwerpunkt stärker auf die
+ziel- bzw. missionsorientierte Auslegung von Sicherheit und Resilienz. Xiong et al. schlagen mit
+ihrem Mission-Oriented Security Framework (MOSF) einen Ansatz vor, der Cyber-Resilienz als
+Gestaltungsziel in Entwurfs- und Entscheidungsprozessen verankert und Sicherheitsmaßnahmen
+konsequent an der Erfüllung der Systemmission ausrichtet \cite[~1--2]{Xiong2023MissionOrientedResilience}.
+Anstatt das Ideal eines vollständig verwundbarkeitsfreien Systems anzunehmen, wird Resilienz als
+Fähigkeit verstanden, Missionsziele trotz Angriffs- und Fehlerszenarien weiterhin in akzeptabler
+Qualität zu erreichen \cite[~3--4]{Xiong2023MissionOrientedResilience}. Dadurch rückt neben
+präventiven Kontrollen auch die Frage in den Vordergrund, wie Systeme im Betrieb reagieren,
+wiederherstellen und sich anpassen können, ohne die mission-kritische Leistung zu verlieren.
+
+
+
+
