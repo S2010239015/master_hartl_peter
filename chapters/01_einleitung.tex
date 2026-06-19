@@ -1,61 +1,128 @@
-\chapter{Einleitung und Zielsetzung des Vorprojekts}
+\chapter{Einleitung}
+\label{chap:einleitung}
 
 \section{Motivation und Problemstellung}
+\label{sec:motivation}
 
-Mit europäischen Regelwerken wie der NIS-2-Richtlinie, dem Cyber Resilience Act (CRA)
-und der Digital Operational Resilience Regulation (DORA) steigen die Anforderungen an
-Organisationen, ihre IT-Systeme nicht nur präventiv abzusichern, sondern deren
-Widerstandsfähigkeit gegenüber Sicherheitsvorfällen ganzheitlich zu betrachten.
-Neben klassischen Schutzmaßnahmen rücken dabei insbesondere die Fähigkeiten zur
-Erkennung, Reaktion und Wiederherstellung nach Sicherheitsvorfällen sowie die
-Nachweisbarkeit dieser Prozesse in den Vordergrund.
+Mit europäischen Regelwerken wie der NIS-2-Richtlinie~\cite{NIS2Directive},
+dem Cyber Resilience Act (CRA)~\cite{CyberResilienceAct} und der Digital
+Operational Resilience Regulation (DORA)~\cite{DORARegulation} steigen die
+Anforderungen an Organisationen, ihre IT-Systeme nicht nur präventiv abzusichern, sondern deren Widerstandsfähigkeit gegenüber Sicherheitsvorfällen ganzheitlich zu betrachten. Neben klassischen Schutzmaßnahmen rücken dabei insbesondere die Fähigkeiten zur Erkennung, Reaktion und Wiederherstellung nach Sicherheitsvorfällen sowie die Nachweisbarkeit dieser Prozesse in den Vordergrund. Resilienz wird damit zu einer Eigenschaft, die nicht nur konzipiert, sondern auch überprüft werden muss.
 
-Für Forschung ergibt sich daraus die zentrale Fragestellung, wie
-solche Fähigkeiten unter realistischen Bedingungen untersucht
-und bewertet werden können. Echte Systeme sind für solche Analysen
-nur eingeschränkt geeignet, da Sicherheitsvorfälle dort große Risiken und
-Nebenwirkungen verursachen können. Gleichzeitig fehlt es an standardisierten
-Testumgebungen, die reproduzierbare Experimente im Bereich der Cyber-Resilienz
-ermöglichen.
+Für Forschung und Entwicklung ergibt sich daraus die Frage, wie sich solche Fähigkeiten
+unter realistischen, zugleich aber kontrollierten Bedingungen untersuchen und bewerten
+lassen. Produktive Systeme sind dafür nur eingeschränkt geeignet, da Sicherheitsvorfälle
+dort erhebliche Risiken verursachen können. Gleichzeitig fehlt es an
+standardisierten Testumgebungen, die reproduzierbare Experimente im Bereich der
+Cyber-Resilienz erlauben \cite{Chouliaras2021}.
 
 Cyber Ranges adressieren dieses Spannungsfeld, indem sie virtuelle, isolierte
-IT-Landschaften bereitstellen, in denen Angriffs-, Verteidigungszenarien realitätsnah simuliert werden können. Während viele
-existierende Cyber-Range-Plattformen primär für Schulungs- und Trainingszwecke
-entwickelt wurden, ist ihr Einsatz als systematische Forschungsumgebung bislang nur
-teilweise vorhanden.
+IT-Landschaften bereitstellen, in denen Angriffs- und Verteidigungsszenarien realitätsnah
+nachgebildet werden können. Während viele existierende Cyber-Range-Plattformen jedoch
+primär für Schulungs- und Trainingszwecke entwickelt wurden, ist ihr systematischer
+Einsatz als Forschungsumgebung -- insbesondere zur reproduzierbaren Evaluation von
+Sicherheitswerkzeugen -- bislang nur teilweise etabliert \cite{IntroductionCyberRanges2022}.
 
-\section{Ziel und Zweck des Vorprojekts}
+Genau hier setzt die vorliegende Arbeit an. Um Sicherheits- und Analysewerkzeuge
+objektiv miteinander vergleichen oder resilienzbezogene Eigenschaften eines Systems
+beurteilen zu können, müssen identische Szenarien unter gleichen Randbedingungen
+wiederholt ausführbar sein. Fehlt diese Reproduzierbarkeit, lassen sich beobachtete
+Unterschiede nicht zweifelsfrei auf das untersuchte Werkzeug zurückführen. Die
+Problemstellung besteht somit darin, eine geeignete Cyber-Range-Plattform so aufzubauen
+und zu betreiben, dass sie als reproduzierbare Forschungsumgebung für
+Cyber-Resilienz-Untersuchungen dienen kann, und dies anhand konkreter, wiederholbarer
+Use Cases nachzuweisen.
 
-Das Vorprojekt dient der strukturierten Vorbereitung der Masterarbeit mit dem Ziel,
-eine Grundlage für den späteren praktischen und wissenschaftlichen Teil zu
-schaffen. Im Mittelpunkt steht dabei nicht die Umsetzung einer vollständigen
-Cyber-Range-Umgebung, sondern die kritische Auseinandersetzung
-mit bestehenden Cyber-Range-Plattformen im Hinblick auf ihre Eignung als
-Forschungsumgebung.
+\section{Zielsetzung}
+\label{sec:zielsetzung}
 
-Konkret verfolgt das Vorprojekt folgende Ziele:
-Es sollen relevante Cyber-Range-Plattformen identifiziert und in ihrem grundlegenden
-Aufbau analysiert werden. Darauf aufbauend wird ein Kriterienkatalog entwickelt, der
-eine objektive Bewertung dieser Plattformen aus
-Forschungsperspektive ermöglicht. Ergänzend dazu erfolgt eine erste technische
-Erkundung, um den erwarteten Implementierungsaufwand sowie potenzielle Risiken für die
-spätere Umsetzung der Masterarbeit abzuschätzen. Auf Basis dieser Analysen wird eine
-begründete, vorläufige Auswahl einer geeigneten Cyber-Range-Plattform getroffen.
+Ziel dieser Arbeit ist es, eine geeignete Cyber-Range-Plattform auszuwählen, aufzubauen
+und als reproduzierbare Forschungsumgebung für Fragestellungen der Cyber-Resilienz
+nutzbar zu machen. Im Mittelpunkt stehen reproduzierbare Anwendungsszenarien (Use Cases),
+an denen sich Sicherheits- und Analysewerkzeuge unter identischen Bedingungen einbinden
+und vergleichen lassen sowie die Funktionsfähigkeit der Forschungsumgebung selbst belegen.
+Der erste und im Detail ausgearbeitete Use Case ist ein Vergleich von Schwachstellen-Scannern
+unterschiedlicher Charakteristik (klassisch, modern und kommerziell) gegen ein definiert
+verwundbares Zielsystem.
 
-Das Vorprojekt schafft damit die konzeptionelle Grundlage für die
-Masterarbeit und reduziert außerdem Unsicherheiten hinsichtlich Machbarkeit und Aufwand
+Konkret verfolgt die Arbeit folgende Teilziele:
+\begin{itemize}
+  \item Es werden objektive Kriterien zur Bewertung von Cyber-Range-Plattformen aus
+        Forschungsperspektive definiert.
+  \item Auf dieser Basis wird die am besten geeignete Plattform ausgewählt und als
+        Forschungsumgebung implementiert.
+  \item Es werden reproduzierbare Cyber-Resilienz-Use-Cases konzipiert und technisch
+        umgesetzt, in die externe Sicherheits- bzw.\ Analysewerkzeuge eingebunden werden.
+  \item Es wird eine Evaluationsmethodik entwickelt, mit der sich Funktionsfähigkeit und
+        Reproduzierbarkeit der Umgebung und der Use Cases überprüfen lassen.
+\end{itemize}
 
-\section{Abgrenzung zur Masterarbeit}
+Das angestrebte Ergebnis ist eine funktionsfähige, modular erweiterbare Forschungsumgebung,
+die wiederholbare Experimente im Bereich der Cyber-Resilienz ermöglicht, gemeinsam mit einer
+belastbaren Methodik zu deren Bewertung.
 
-Eine klare Abgrenzung zwischen Vorprojekt und Masterarbeit ist für das Verständnis des
-Arbeitsumfangs wesentlich. Das Vorprojekt fokussiert sich auf Analyse, Vergleich und
-Entscheidungsvorbereitung. Es beinhaltet weder die vollständige Implementierung einer
-Cyber-Range-Plattform noch die Ausarbeitung oder Evaluation konkreter
-Cyber-Resilienz-Use-Cases.
+\section{Forschungsfragen}
+\label{sec:forschungsfragen}
 
-Die eigentliche Masterarbeit baut auf den Ergebnissen des Vorprojekts auf und widmet
-sich der praktischen Umsetzung der ausgewählten Cyber-Range-Plattform. Dort erfolgt
-die detaillierte Konzeption und Implementierung reproduzierbarer Use Cases sowie deren
-Evaluation im Hinblick auf Cyber-Resilienz. Während das Vorprojekt somit die
-„Landkarte“ für das Forschungsvorhaben darstellt, bildet die Masterarbeit die
-konsequente Umsetzung und wissenschaftliche Auswertung dieser Planung.
+Aus der Problem- und Zielsetzung leitet sich die folgende übergeordnete Forschungsfrage ab:
+
+\begin{quote}
+Wie kann eine geeignete Cyber-Range-Plattform ausgewählt, aufgebaut und eingesetzt werden,
+um eine funktionsfähige Forschungsumgebung für Cyber-Resilienz mit reproduzierbaren Use
+Cases bereitzustellen?
+\end{quote}
+
+Zur Beantwortung der Forschungsfrage werden die folgenden Untersuchungsfragen betrachtet:
+
+\begin{enumerate}
+  \item Nach welchen objektiven Kriterien lassen sich Cyber-Range-Plattformen für Forschung
+        und Tool-Integration bewerten?
+  \item Welche Plattform erfüllt diese Anforderungen am besten und eignet sich für den Aufbau
+        einer forschungsorientierten Umgebung?
+  \item Wie können realistische und reproduzierbare Cyber-Resilienz-Use-Cases auf der
+        ausgewählten Plattform modelliert und umgesetzt werden?
+  \item Welche technischen Schnittstellen sind notwendig, um Sicherheits- oder
+        Monitoring-Tools in die Cyber Range einzubinden?
+  \item Wie lässt sich die Funktionsfähigkeit und Reproduzierbarkeit der entwickelten Use
+        Cases evaluieren?
+\end{enumerate}
+
+\section{Methodik}
+\label{sec:methodik}
+
+Die Arbeit folgt einem \emph{Design-Science-Research}-Ansatz (DSR), der die Konstruktion
+und Evaluation eines praktischen Artefakts -- hier der Forschungsumgebung samt Use Cases --
+in den Mittelpunkt stellt und mit einer systematischen Literaturrecherche kombiniert
+\cite{Hevner2004DesignScience}. Das Vorgehen orientiert sich an den etablierten Phasen
+gestaltungsorientierter Forschung \cite{Peffers2007DSRM} und gliedert sich in:
+
+\begin{enumerate}
+  \item \textbf{Analyse:} Untersuchung existierender Cyber-Range-Plattformen sowie
+        wissenschaftlicher Ansätze zu Szenarienmodellierung, Reproduzierbarkeit und
+        Tool-Integration.
+  \item \textbf{Plattformvergleich:} strukturierter Vergleich mehrerer Plattformen anhand
+        definierter Kriterien und Auswahl der geeignetsten Lösung.
+  \item \textbf{Konzeption:} Entwurf reproduzierbarer Cyber-Resilienz-Use-Cases inklusive
+        Evaluationskriterien.
+  \item \textbf{Implementierung:} technische Umsetzung der Use Cases auf der ausgewählten
+        Plattform inklusive der notwendigen Integrationsschnittstellen.
+  \item \textbf{Evaluation:} Überprüfung von Funktionsfähigkeit, Reproduzierbarkeit und
+        Erweiterbarkeit der entwickelten Umgebung und Use Cases.
+  \item \textbf{Reflexion:} Ableitung von Empfehlungen für den wissenschaftlichen Einsatz von
+        Cyber Ranges.
+\end{enumerate}
+
+\section{Aufbau der Arbeit}
+\label{sec:aufbau}
+
+Kapitel~\ref{chap:einleitung} umreißt Motivation, Zielsetzung, Forschungsfragen und
+Methodik. Kapitel~\ref{chap:grundlagen} erarbeitet die fachlichen Grundlagen zu Cyber Ranges,
+Cyber-Resilienz und Schwachstellen-Scannern. Kapitel~\ref{chap:stand-der-technik} ordnet den
+Stand der Technik ein und betrachtet bestehende Cyber-Range-Plattformen sowie verwandte
+Arbeiten. In Kapitel~\ref{chap:auswahl} werden ein Kriterienkatalog entwickelt, die
+betrachteten Plattformen verglichen und die Auswahl begründet. Kapitel~\ref{chap:konzeption}
+beschreibt die Konzeption der Use Cases und die Evaluationsmethodik, bevor
+Kapitel~\ref{chap:implementierung} deren technische Umsetzung in der gewählten Cyber Range
+darlegt. Kapitel~\ref{chap:evaluation} präsentiert und diskutiert die Evaluationsergebnisse.
+Kapitel~\ref{chap:fazit} fasst die Arbeit zusammen, beantwortet die Forschungsfragen und gibt
+einen Ausblick.

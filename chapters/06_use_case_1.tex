@@ -1,0 +1,714 @@
+\chapter{Use Case 1: Vergleich von Schwachstellen-Scannern}
+\label{chap:uc1}
+
+Dieses Kapitel setzt den ersten Use Case der Forschungsumgebung um und wertet ihn aus. Es ist als
+geschlossene Einheit aufgebaut und führt von der Zielsetzung über die Konzeption und die
+Evaluationsmethodik bis zur Implementierung, den Ergebnissen und deren Diskussion.
+
+\section{Zielsetzung und Bezug zu den Forschungsfragen}
+\label{sec:uc1-ziel}
+
+Use Case 1 vergleicht mehrere Schwachstellen-Scanner unter identischen und reproduzierbaren
+Bedingungen. Als Ziel dient ein absichtlich verwundbares System, das in der ausgewählten Plattform
+CyberRangeCZ (Kapitel~\ref{chap:auswahl}) als isolierte Sandbox bereitgestellt wird. Verglichen
+werden ein klassischer quelloffener Scanner (OpenVAS), ein moderner template-basierter Scanner
+(Nuclei) und ein kommerzielles Werkzeug (Nessus). Ergänzend kommen Werkzeuge für die Host-Härtung
+und die Container-Analyse hinzu.
+
+Der Use Case ist dabei mehr als ein reiner Werkzeugvergleich. Er dient als konkreter Nachweis, dass
+die aufgebaute Umgebung reproduzierbare Experimente mit externen Sicherheitswerkzeugen ermöglicht.
+Damit operationalisiert er die zentrale Forschungsfrage, die nach einer Forschungsumgebung mit
+reproduzierbaren Use Cases fragt.
+
+Inhaltlich ordnet sich der Use Case in den Resilienzbegriff dieser Arbeit ein.
+Schwachstellen-Scanning gehört zur vorbereitenden Phase der Resilienz
+(Abschnitt~\ref{subsec:resilienz-bezug}), also dem Erkennen von Schwächen, bevor ein Angriff
+stattfindet. Je zuverlässiger und vollständiger ein Werkzeug Schwachstellen erkennt, desto besser
+ist ein System auf mögliche Angriffe vorbereitet.
+
+Bezogen auf die Untersuchungsfragen aus der Einleitung (Kapitel~\ref{chap:einleitung}) adressiert Use Case 1
+vor allem die Modellierung eines reproduzierbaren Use Case (UF3), die Einbindung externer Werkzeuge
+über geeignete Schnittstellen (UF4) und die Evaluation der Reproduzierbarkeit (UF5). Bezogen auf die
+Bewertungskriterien aus Kapitel~\ref{chap:auswahl} betrifft er vor allem die Reproduzierbarkeit (K1), die
+Automatisierung und Lifecycle-Steuerung (K2), die Integrationsfähigkeit externer Werkzeuge (K3)
+sowie die Wartbarkeit (K7).
+
+\section{Konzeption}
+\label{sec:uc1-konzeption}
+
+Die Konzeption von Use Case 1 umfasst drei Festlegungen: die Auswahl der verglichenen Werkzeuge, die
+methodische Einteilung in Untersuchungsperspektiven und das Design des verwundbaren Zielsystems.
+
+\subsection{Auswahl der Werkzeuge}
+\label{subsec:uc1-werkzeuge}
+
+Für den Vergleich wurden Werkzeuge ausgewählt, die unterschiedliche Ansätze und Lizenzmodelle
+abdecken. Im Zentrum stehen drei Netzwerk-Scanner. OpenVAS steht für den klassischen Ansatz eines
+vollständigen Vulnerability-Managements und ist quelloffen. Nuclei ist ein moderner,
+leichtgewichtiger und template-basierter Scanner und ebenfalls quelloffen. Nessus ist ein
+kommerzielles, proprietäres Werkzeug. Diese Auswahl bildet bewusst ein Spektrum ab, von einer
+schweren, umfassenden Plattform über ein schlankes, exploit-nahes Werkzeug bis zu einer
+kommerziellen Lösung.
+
+Ein einzelner Netzwerk-Scanner kann jedoch nicht alle relevanten Schwachstellen erfassen. Schwächen
+in der Systemkonfiguration oder im Inneren von Containern sind über das Netzwerk nicht sichtbar.
+Daher wurden ergänzende Werkzeuge einbezogen. Lynis und OpenSCAP prüfen die Härtung und Compliance
+des Systems von innen, Trivy untersucht Container-Images auf bekannte Schwachstellen. Die einzelnen
+Werkzeugkategorien wurden bereits in Abschnitt~\ref{sec:vuln-scanner} eingeführt.
+
+\subsection{Untersuchungsperspektiven}
+\label{subsec:uc1-perspektiven}
+
+Die ausgewählten Werkzeuge lassen sich nicht sinnvoll auf einer einzigen Skala vergleichen, weil sie
+unterschiedliche Fragen beantworten. Statt einer Rangfolge ordnet Use Case 1 die Werkzeuge daher
+vier methodisch verschiedenen Untersuchungsperspektiven zu. Ein fairer Vergleich ist nur innerhalb
+einer Perspektive möglich. Über die Perspektiven hinweg geht es nicht um eine Rangfolge, sondern um
+die Abdeckung unterschiedlicher Sichtweisen auf dasselbe Zielsystem. Tabelle~\ref{tab:uc1-perspektiven}
+fasst die vier Perspektiven zusammen.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{p{2.2cm}p{6.0cm}p{4.2cm}}
+\hline
+\textbf{Perspektive} & \textbf{Frage} & \textbf{Werkzeuge} \\
+\hline
+A1 -- Unauthenticated Network & Was sieht ein Angreifer von außen? & Nuclei, OpenVAS (unauth) \\
+A2 -- Credentialed Network & Was zeigt sich mit Login (Paketstand)? & OpenVAS (credentialed) \\
+A3 -- Host Hardening / Compliance & Wie gehärtet ist das System selbst? & Lynis, OpenSCAP/CIS \\
+A4 -- Container Image / SCA & Was steckt in den Containern? & Trivy \\
+\hline
+\end{tabular}
+\caption{Die vier Untersuchungsperspektiven von Use Case 1 mit der jeweiligen Leitfrage und den zugeordneten Werkzeugen.}
+\label{tab:uc1-perspektiven}
+\end{table}
+
+Perspektive A1 betrachtet das System aus der Sicht eines Angreifers ohne Zugangsdaten und umfasst die
+beiden Netzwerk-Scanner Nuclei und OpenVAS im unauthentifizierten Betrieb. Perspektive A2 nutzt einen
+Login und liest den installierten Paketstand des Hosts aus, was im Use Case über OpenVAS im
+credentialed-Modus abgebildet wird. Perspektive A3 bewertet die Härtung und Konfiguration des Systems
+von innen und wird durch Lynis und OpenSCAP abgedeckt. Perspektive A4 schaut in die Container-Images
+hinein und wird durch Trivy vertreten.
+
+\subsection{Design des Zielsystems}
+\label{subsec:uc1-ziel-design}
+
+Damit alle vier Perspektiven etwas zu untersuchen haben, wurde ein absichtlich verwundbares
+Zielsystem entworfen. Es wird über Ansible-Rollen reproduzierbar bereitgestellt, sodass sich derselbe
+Ausgangszustand wiederholt herstellen lässt. Der genaue technische Aufbau und die Provisionierung
+werden in Abschnitt~\ref{sec:uc1-implementierung} beschrieben. Dieser Abschnitt beschreibt die
+geplanten Schwachstellen selbst und erläutert, warum sie ausgewählt wurden.
+
+Die Schwachstellen verteilen sich bewusst auf drei Klassen. Die erste Klasse besteht aus
+netzwerk-erreichbaren Diensten mit bekannten CVEs. Die zweite Klasse umfasst Fehlkonfigurationen auf
+Netzwerkebene. Die dritte Klasse besteht aus host-lokalen Schwächen, die nur mit Zugangsdaten
+sichtbar sind. Tabelle~\ref{tab:uc1-zielsystem} gibt einen Überblick, die folgenden Unterabschnitte
+beschreiben jede Schwachstelle im Detail.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{1.0cm}p{7.5cm}p{3.4cm}}
+\hline
+\textbf{ID} & \textbf{Dienst / Schwachstelle} & \textbf{Port / Ebene} \\
+\hline
+A1 & Apache httpd 2.4.49 -- CVE-2021-41773 (Path Traversal) & 8080 \\
+A2 & Apache Tomcat 9.0.30 -- CVE-2020-1938 (Ghostcat) & 8009 / 8090 \\
+A3 & Grafana 8.3.0 -- CVE-2021-43798 (Path Traversal) & 3000 \\
+A4 & Jenkins 2.138.1 -- CVE-2018-1000861 (Pre-Auth-RCE) & 8085 \\
+\hline
+B1 & FTP mit anonymem Zugang und schwachen Zugangsdaten & 21 \\
+B2 & Schwache SSH-Konfiguration & 22 \\
+B3 & Anonyme Samba-Freigaben & 139 / 445 \\
+B4 & NFS-Export mit \texttt{no\_root\_squash} & 2049 / 111 \\
+B5 & Apache-Fehlkonfiguration und Informationsleck & 80 \\
+B6 & rlogin-Dienst mit Klartext-Authentisierung & 513 \\
+B7 & TFTP-Dienst über UDP & 69/UDP \\
+\hline
+C1 & World-writable sensible Dateien & Host-lokal \\
+C2 & SUID-Bits auf Standardwerkzeugen & Host-lokal \\
+C3 & Unsichere sudoers-Einträge (NOPASSWD) & Host-lokal \\
+C4 & Schwache lokale Benutzerkonten & Host-lokal \\
+\hline
+\end{tabular}
+\caption{Überblick über die im Zielsystem geplanten Schwachstellen.}
+\label{tab:uc1-zielsystem}
+\end{table}
+
+\subsubsection{Netzwerk-erreichbare Dienste mit bekannten CVEs}
+
+Die erste Klasse bilden bewusst veraltete Dienste, die jeweils eine dokumentierte CVE-Schwachstelle
+mitbringen. Sie sind über das Netzwerk erreichbar und richten sich damit primär an die
+unauthentifizierte Perspektive (A1).
+
+Der erste Dienst ist ein Apache-Webserver in der Version 2.4.49 mit CVE-2021-41773. Diese Lücke ist
+ein Path-Traversal-Fehler. Über speziell kodierte URLs lassen sich unter bestimmten Bedingungen
+Dateien außerhalb des Web-Wurzelverzeichnisses lesen, und bei aktiviertem CGI ist sogar
+Codeausführung möglich. Entscheidend ist, dass die Ausnutzbarkeit stark von der Konfiguration
+abhängt. Genau deshalb wurde diese CVE gewählt. Sie eignet sich, um den Unterschied zwischen einer
+rein versionsbasierten und einer exploit-basierten Erkennung sichtbar zu machen, da ein Dienst die
+verwundbare Version tragen kann, ohne tatsächlich angreifbar zu sein.
+
+Der zweite Dienst ist ein Apache Tomcat 9.0.30 mit CVE-2020-1938, bekannt als Ghostcat. Die Lücke
+betrifft den AJP-Connector, der bei Tomcat standardmäßig auf Port 8009 lauscht. Über manipulierte
+AJP-Anfragen lassen sich Dateien aus der Webanwendung lesen, etwa aus dem geschützten
+WEB-INF-Verzeichnis. Unter zusätzlichen Voraussetzungen kann daraus auch eine Codeausführung werden.
+Der Dienst steht im Use Case für eine Schwachstelle, die nicht über den normalen HTTP-Port, sondern
+über einen separaten Protokoll-Port erreichbar ist.
+
+Der dritte Dienst ist eine Grafana-Instanz in der Version 8.3.0 mit CVE-2021-43798. Auch hier handelt
+es sich um einen Path-Traversal-Fehler. Über die Plugin-Pfade lassen sich beliebige lokale Dateien
+auslesen, beispielsweise Konfigurationsdateien oder Systemdateien. Die Lücke ist ohne
+Authentisierung ausnutzbar und eignet sich daher gut als klar nachweisbarer, exploit-basierter
+Treffer.
+
+Der vierte Dienst ist ein Jenkins-Server in der Version 2.138.1 mit CVE-2018-1000861. Diese Lücke
+betrifft das zugrundeliegende Stapler-Web-Framework und erlaubt unter Umständen die Ausführung von
+Code bereits ohne vorherige Anmeldung. Sie steht für eine besonders kritische Schwachstelle, die in
+der Praxis als hochriskant gilt und sich zuverlässig über die Version erkennen lässt.
+
+\subsubsection{Fehlkonfigurationen auf Netzwerkebene}
+
+Die zweite Klasse besteht aus typischen Fehlkonfigurationen, wie sie in realen Umgebungen häufig
+auftreten. Sie sind ebenfalls über das Netzwerk sichtbar, beruhen aber nicht auf einer
+Software-CVE, sondern auf einer unsicheren Einstellung.
+
+B1 ist ein FTP-Dienst auf Basis von vsftpd, der mit einem anonymen Zugang und mit schwachen
+Zugangsdaten vorgesehen ist. Schwache Standard-Zugangsdaten wie \texttt{admin:admin} oder
+\texttt{guest:guest} sollen einen einfachen, unautorisierten Zugriff ermöglichen. Der Dienst steht
+für die klassische Kombination aus offenem Dienst und schwachen Anmeldedaten.
+
+B2 ist eine absichtlich geschwächte SSH-Konfiguration. Vorgesehen sind veraltete und schwache
+kryptografische Verfahren, also unsichere Ciphers, MAC- und Key-Exchange-Algorithmen, sowie
+freizügige Anmeldeoptionen. Damit lässt sich prüfen, ob die Werkzeuge schwache kryptografische
+Einstellungen eines ansonsten aktuellen SSH-Dienstes erkennen.
+
+B3 sind anonyme Samba-Freigaben. Über das SMB-Protokoll werden Freigaben bereitgestellt, auf die ohne
+Authentisierung zugegriffen werden kann. Dadurch sind Dateien für jeden im Netzwerk lesbar, was ein
+typisches Datenleck darstellt.
+
+B4 ist ein NFS-Export mit der Option \texttt{no\_root\_squash}. Diese Option bewirkt, dass ein
+entfernter Benutzer mit Root-Rechten auch auf dem Server als Root agiert. In Kombination mit einem
+offenen Export ist das eine schwerwiegende Fehlkonfiguration, die einen weitreichenden Zugriff auf
+das Dateisystem ermöglichen kann.
+
+B5 ist eine Apache-Instanz auf dem Standard-Port mit mehreren Fehlkonfigurationen. Vorgesehen sind
+eine offene Status-Seite sowie eine erreichbare phpinfo-Ausgabe. Solche Seiten geben interne
+Informationen über das System und die Konfiguration preis und erleichtern einem Angreifer die
+Vorbereitung weiterer Schritte.
+
+B6 ist ein rlogin-Dienst auf Basis des rsh-Servers. Dieser Dienst überträgt Anmeldedaten im Klartext
+und gilt seit Langem als unsicher. Er ist als Beispiel für einen veralteten Dienst gedacht, der über
+ein eigenes Protokoll erreichbar ist und sich nur schwer durch moderne, HTTP-orientierte Werkzeuge
+erfassen lässt.
+
+B7 ist ein TFTP-Dienst, der über UDP auf Port 69 erreichbar ist. TFTP erlaubt einen einfachen
+Dateitransfer ohne Authentisierung. Der Dienst wurde bewusst über UDP vorgesehen, weil viele
+Netzwerk-Scanner auf TCP fokussiert sind und UDP-Dienste leicht übersehen. Damit eignet er sich, um
+eine bekannte Grenze netzwerkbasierter Scans zu prüfen.
+
+\subsubsection{Host-lokale Schwachstellen}
+
+Die dritte Klasse besteht aus Schwächen, die sich nicht über das Netzwerk zeigen, sondern erst nach
+einer Anmeldung auf dem System sichtbar werden. Sie richten sich an die credentialed Perspektive (A2)
+und an die Host-Audit-Perspektive (A3).
+
+C1 betrifft sensible Dateien, die für alle Benutzer schreibbar sind (world-writable). Vorgesehen sind
+eine schreibbare Sicherungskopie von \texttt{/etc/shadow} (\texttt{/etc/shadow.backup}), ein
+Backup-Archiv unter \texttt{/root} und eine Log-Datei mit vertraulichem Inhalt. Besonders kritisch ist
+die schreibbare Shadow-Kopie, da sich darüber Passwort-Hashes abgreifen oder manipulieren lassen.
+
+C2 sind gesetzte SUID-Bits auf Standardwerkzeugen wie \texttt{cp}, \texttt{find} und \texttt{vim}.
+Das SUID-Bit führt dazu, dass ein Programm mit den Rechten seines Eigentümers läuft, in der Regel
+also als Root. Bei Standardwerkzeugen lässt sich das über bekannte Techniken zur
+Rechteausweitung ausnutzen, sodass ein normaler Benutzer Root-Rechte erlangen kann.
+
+C3 sind unsichere Einträge in der sudoers-Konfiguration. Vorgesehen sind Regeln mit der
+NOPASSWD-Option, die bestimmten Konten erlauben, Befehle ohne Passwort als Root auszuführen. In
+Kombination mit den genannten Werkzeugen führt das zu einer trivialen Rechteausweitung.
+
+C4 sind schwache lokale Benutzerkonten. Vorgesehen sind mehrere Konten mit einfachen, erratbaren
+Passwörtern und einer interaktiven Shell. Sie stehen für die häufige Schwäche, dass ein System zwar
+aktuell gepatcht ist, aber über schwache Anmeldedaten verfügt.
+
+\section{Evaluationsmethodik}
+\label{sec:uc1-methodik}
+
+Um die Werkzeuge objektiv zu vergleichen, braucht es zwei Dinge: einen verlässlichen Maßstab dafür,
+welche Schwachstellen tatsächlich vorhanden sind, und klar definierte Kennzahlen für die Bewertung
+der Funde.
+
+\subsection{Verifizierte Referenzbasis (Ground Truth)}
+\label{subsec:uc1-groundtruth}
+
+Die in den Ansible-Rollen vorgesehenen Schwachstellen geben nur die Absicht wieder. Sie entsprechen
+nicht zwangsläufig dem tatsächlichen Laufzeitzustand. Eine vorgesehene Lücke kann inaktiv sein, etwa
+weil ein Konfigurations-Drop-in sie überschreibt oder ein Dienst die unsichere Einstellung nicht
+übernimmt. Ein Vergleich der Werkzeuge gegen die bloße Absicht wäre daher verzerrt.
+
+Aus diesem Grund wurde eine scanner-unabhängige Referenzbasis erstellt, in der Literatur als Ground
+Truth bezeichnet. Jede geplante Schwachstelle wurde per gezieltem Direkt-Check auf dem Zielsystem
+überprüft und entweder als aktiv bestätigt oder als Drift verworfen. Als Drift wird dabei eine
+Abweichung zwischen dem vorgesehenen und dem tatsächlichen Zustand bezeichnet, also eine geplante
+Schwachstelle, die zur Laufzeit gar nicht aktiv ist. Verwendet wurden für die Prüfung
+Standardwerkzeuge wie \texttt{curl}, \texttt{find}, \texttt{grep}, \texttt{showmount},
+\texttt{smbclient} und \texttt{sshd -T}. Diese Prüfungen sind gezielt und nicht-destruktiv. Sie
+stellen fest, ob eine Schwachstelle real vorhanden ist, ohne das System anzugreifen.
+
+Die Verifikation ist notwendig, weil sonst systematische Fehler entstehen. Übersieht ein Scanner eine
+vorgesehene, aber gar nicht aktive Lücke, würde das fälschlich als Fehler des Scanners gewertet.
+Solche Phantom-Fehler verzerren jeden Recall-Wert nach unten. Drift wird deshalb explizit
+ausgewiesen und aus der Wertung ausgeschlossen.
+
+Bei den CVE-behafteten Diensten wird zusätzlich zwischen „Version vorhanden" und „tatsächlich
+ausnutzbar" unterschieden. Ein Dienst kann die verwundbare Version tragen, ohne in seiner konkreten
+Konfiguration angreifbar zu sein. Wo möglich, wurde die Ausnutzbarkeit über einen gezielten,
+nicht-destruktiven Check bestätigt. Bei Lücken, deren Ausnutzung das System verändern würde, bleibt
+es bei der Versionsfeststellung. Diese Unterscheidung ist zentral für den Vergleich versions- und
+exploit-basierter Scanner.
+
+Die so entstandene Referenzbasis ist der alleinige Maßstab der Bewertung. Recall und Precision der
+einzelnen Werkzeuge werden ausschließlich gegen diese verifizierte Liste gemessen.
+
+\subsection{Bewertungsmetriken}
+\label{subsec:uc1-metriken}
+
+Für die Bewertung werden die beiden in Abschnitt~\ref{subsec:scan-metriken} eingeführten Kennzahlen
+verwendet. Recall gibt an, welcher Anteil der real vorhandenen Schwachstellen erkannt wurde.
+Precision gibt an, welcher Anteil der gemeldeten Funde tatsächlich zutrifft. Ein False Negative ist
+eine übersehene, real vorhandene Schwachstelle, ein False Positive ein gemeldeter, aber nicht
+vorhandener Fund.
+
+Die Berechnung von Recall ist im Fall von UC1 nicht eindeutig, weil zwei legitime Nenner möglich
+sind. Betrachtet man das vorhandene Inventar, zählt jede CVE-behaftete Software als Schwachstelle,
+unabhängig davon, ob sie konkret ausnutzbar ist. Diese Sicht begünstigt versionsbasierte Scanner wie
+OpenVAS und Nessus. Betrachtet man dagegen nur die tatsächlich ausnutzbaren Lücken, fallen reine
+Versionstreffer heraus. Diese Sicht begünstigt exploit-basierte Werkzeuge wie Nuclei. Die Wahl des
+Nenners ist damit selbst ein Ergebnis und wird in der Auswertung offengelegt.
+
+Der reine Findings-Zähler ist als Maßstab nicht ausreichend. Ein hoher Wert kann auch durch viele
+niedrig eingestufte oder nicht ausnutzbare Funde entstehen. Zur Einordnung des Schweregrads dient
+daher das CVSS. Außerdem werden die Kennzahlen jeweils innerhalb einer Untersuchungsperspektive
+betrachtet, da nur dort ein fairer Vergleich möglich ist.
+
+
+\section{Implementierung}
+\label{sec:uc1-implementierung}
+
+Dieser Abschnitt beschreibt den konkreten Aufbau von Use Case 1 in CyberRangeCZ. Er umfasst die
+Sandbox-Topologie, die automatisierte Provisionierung des Zielsystems und des Scanner-Hosts sowie
+die betrieblichen Herausforderungen, die beim Aufbau gelöst wurden.
+
+\subsection{Sandbox-Topologie}
+\label{subsec:uc1-topologie}
+
+Die Sandbox von Use Case 1 ist bewusst einfach gehalten. Sie besteht aus drei Systemen in einem
+einzigen Netzwerksegment. Die folgende Topologie-Definition beschreibt die beteiligten Hosts, den
+Router und das Netzwerk.
+
+\begin{verbatim}
+name: uc1-vulnscan
+hosts:
+  - name: target
+    base_box:
+      image: ubuntu-noble-x86_64
+      man_user: ubuntu
+    flavor: standard.small
+  - name: scanner
+    base_box:
+      image: ubuntu-noble-x86_64
+      man_user: ubuntu
+    flavor: m1.medium
+routers:
+  - name: router
+    base_box:
+      image: debian-12-x86_64
+      man_user: debian
+    flavor: standard.small
+networks:
+  - name: lab-switch
+    cidr: 192.168.20.0/24
+net_mappings:
+  - host: target
+    network: lab-switch
+    ip: 192.168.20.5
+  - host: scanner
+    network: lab-switch
+    ip: 192.168.20.10
+\end{verbatim}
+
+Das Netzwerk \texttt{lab-switch} nutzt den Bereich 192.168.20.0/24. Das Zielsystem liegt auf
+192.168.20.5, der Scanner auf 192.168.20.10 und der Router auf 192.168.20.1. Bewusst wird nur ein
+einziges Netzwerksegment verwendet. Eine frühere Variante mit mehreren Netzen führte zu einem
+Konflikt bei der Default-Route, der durch das einzelne Segment vermieden wird.
+
+Die Flavors legen die Ressourcen der Instanzen fest. Das Zielsystem nutzt \texttt{standard.small},
+der Scanner das größere \texttt{m1.medium} mit 40~GB Disk. Der Grund ist der ressourcenintensive
+OpenVAS-Stack, der auf kleineren Flavors nicht lauffähig war. Auch dieser Punkt wird in
+Abschnitt~\ref{subsec:uc1-betrieb} aufgegriffen.
+
+Jede Sandbox wird in CyberRangeCZ als Satz von OpenStack-Instanzen bereitgestellt. Die
+Provisionierung der Inhalte erfolgt über Ansible. Das zugehörige Playbook ruft für das Zielsystem
+die Rolle \texttt{vulnerable-target} und für den Scanner die Rolle \texttt{scanner-host} auf.
+
+\subsection{Aufbau des verwundbaren Zielsystems}
+\label{subsec:uc1-zielsystem-aufbau}
+
+Das Zielsystem wird vollständig über die Ansible-Rolle \texttt{vulnerable-target} provisioniert.
+Damit ist der gesamte Aufbau reproduzierbar und versionierbar. Die vollständige Rolle sowie die
+übrigen Definitionsdateien sind in Anhang~\ref{chap:quelltext-uc1} abgedruckt. Die Rolle gliedert
+sich grob in drei
+Teile, die den im Konzept beschriebenen Schwachstellenklassen entsprechen: die Installation und
+Fehlkonfiguration netzwerk-erreichbarer Dienste, das Einrichten host-lokaler Schwächen und das
+Starten der CVE-behafteten Dienste als Container.
+
+Die Fehlkonfigurationen werden direkt über die jeweiligen Konfigurationsdateien gesetzt. Die
+schwache SSH-Konfiguration wird beispielsweise als zusätzlicher Block in die \texttt{sshd\_config}
+geschrieben.
+
+\begin{verbatim}
+- name: Weak SSH configuration
+  blockinfile:
+    path: /etc/ssh/sshd_config
+    validate: '/usr/sbin/sshd -t -f %s'
+    block: |
+      PermitRootLogin yes
+      PasswordAuthentication yes
+      PermitEmptyPasswords yes
+      Ciphers +aes128-cbc,3des-cbc
+      MACs +hmac-sha1,hmac-md5
+      KexAlgorithms +diffie-hellman-group1-sha1,diffie-hellman-group14-sha1
+\end{verbatim}
+
+Die host-lokalen Schwächen werden über einfache Dateioperationen erzeugt, etwa die world-writable
+Dateien und die SUID-Bits auf Standardwerkzeugen.
+
+\begin{verbatim}
+- name: Create world-writable sensitive files
+  file:
+    path: "{{ item }}"
+    state: touch
+    mode: '0777'
+  loop:
+    - /etc/shadow.backup
+    - /var/log/secret.log
+    - /root/backup.tar.gz
+
+- name: Set dangerous SUID bits
+  file:
+    path: "{{ item }}"
+    mode: 'u+s'
+  loop:
+    - /bin/cp
+    - /usr/bin/find
+    - /usr/bin/vim.basic
+\end{verbatim}
+
+Die unsicheren sudoers-Regeln werden als eigene Datei unter \texttt{/etc/sudoers.d} abgelegt und beim
+Schreiben mit \texttt{visudo} validiert.
+
+\begin{verbatim}
+- name: Insecure sudoers configuration
+  copy:
+    dest: /etc/sudoers.d/insecure
+    content: |
+      test ALL=(ALL) NOPASSWD: /bin/bash
+      admin ALL=(ALL) NOPASSWD: ALL
+      backup ALL=(ALL) NOPASSWD: /usr/bin/vim, /usr/bin/find
+    mode: '0440'
+    validate: 'visudo -cf %s'
+\end{verbatim}
+
+Die vier CVE-behafteten Dienste werden als Docker-Container bereitgestellt, da die verwundbaren
+Versionen nicht als Standard-Ubuntu-Pakete verfügbar sind. Die Rolle installiert dafür Docker und
+startet die Container in einer Schleife.
+
+\begin{verbatim}
+- name: Verwundbare CVE-Container starten
+  community.docker.docker_container:
+    name: "{{ item.name }}"
+    image: "{{ item.image }}"
+    ports: "{{ item.ports }}"
+    restart_policy: unless-stopped
+    state: started
+    pull: true
+  loop:
+    - name: vuln-apache
+      image: "httpd:2.4.49"
+      ports: ["8080:80"]
+    - name: vuln-tomcat
+      image: "tomcat:9.0.30"
+      ports: ["8090:8080", "8009:8009"]
+    - name: vuln-grafana
+      image: "grafana/grafana:8.3.0"
+      ports: ["3000:3000"]
+    - name: vuln-jenkins
+      image: "jenkins/jenkins:2.138.1"
+      ports: ["8085:8080"]
+\end{verbatim}
+
+Da Tomcat und Jenkins als JVM-Container vergleichsweise viel Arbeitsspeicher benötigen, richtet die
+Rolle zusätzlich eine Swap-Datei ein.
+
+Nicht alle vorgesehenen Schwachstellen werden im Betrieb tatsächlich aktiv. Die in der Rolle
+vorgesehene verwundbare PHP-Anwendung samt MySQL-Datenbank wird nicht eingerichtet, da der zuständige
+MySQL-Task eine unter MySQL 8.0 nicht mehr gültige Syntax verwendet. Die Anwendung läuft dadurch auf
+Port 80 ins Leere. Die Folgen für die Bewertung werden in Abschnitt~\ref{sec:uc1-ergebnisse} als
+Drift behandelt.
+
+
+\subsection{Scanner-Deployment}
+\label{subsec:uc1-scanner-aufbau}
+
+Der Scanner-Host wird über die Rolle \texttt{scanner-host} provisioniert. Er stellt die
+Netzwerk-Scanner sowie unterstützende Werkzeuge bereit. Zunächst installiert die Rolle
+Basiswerkzeuge wie \texttt{nmap} und anschließend die Docker-Engine aus dem offiziellen
+Docker-Repository.
+
+OpenVAS wird nicht über Pakete, sondern als Greenbone-Community-Container-Stack betrieben. Die Rolle
+lädt dazu die \texttt{compose.yaml} von Greenbone und startet den Verbund. Eine wichtige
+Designentscheidung betrifft den Start dieses Stacks. Der erste Lauf lädt umfangreiche Images und
+Feeds (CVE, SCAP, VTs), was viele Minuten dauert. Würde die Rolle darauf warten, liefe die
+Sandbox-Allokation in einen Timeout. Der Pull und der Start laufen daher als Hintergrundjob ohne
+Warten.
+
+\begin{verbatim}
+- name: Pull and start Greenbone (non-blocking background job)
+  shell: |
+    docker compose -f /opt/greenbone/compose.yaml pull
+    docker compose -f /opt/greenbone/compose.yaml up -d
+  args:
+    chdir: /opt/greenbone
+  async: 3600
+  poll: 0
+\end{verbatim}
+
+Nuclei wird als Binary in einer festen Version installiert, \texttt{nmap} steht über die
+Basiswerkzeuge zur Verfügung. Der dritte Scanner, Nessus Essentials, wird nicht automatisiert
+ausgerollt, sondern manuell installiert, da er eine Registrierung und Lizenzaktivierung erfordert.
+Diese Lizenzprüfung verhinderte später jeden verwertbaren Scan und wird in der Diskussion
+(Abschnitt~\ref{sec:uc1-diskussion}) aufgegriffen. Der interaktive Zugang
+zum Scanner wird über die Rolle \texttt{user-access} mit einem definierten Konto und sudo-Rechten
+eingerichtet.
+
+\subsection{Betriebliche Herausforderungen und Lösungen}
+\label{subsec:uc1-betrieb}
+
+Der Aufbau der Umgebung brachte einige nicht-triviale Probleme mit sich, die vor allem die
+Automatisierung (K2), die Wartbarkeit (K7) und die Reproduzierbarkeit (K1) betreffen.
+
+Unter Ubuntu 24.04 sind die klassischen OpenVAS-Pakete nicht mehr verfügbar, weshalb der Scanner wie
+oben beschrieben als Container-Stack betrieben wird. Die dreifach verschachtelte Virtualisierung aus
+physischem Host, OpenStack-VM und Sandbox-Instanzen setzte zusätzlich mehrere Ressourcengrenzen. Der
+Scanner benötigte einen größeren Flavor, OpenStack deckelte die buchbare Disk künstlich, was über
+eine Anpassung der Nova-Konfiguration gelöst wurde, und der ressourcenintensive OpenVAS-Stack lief
+erst mit einer zusätzlichen Swap-Datei stabil.
+
+Für den reproduzierbaren Betrieb war außerdem das Import-Verhalten der Plattform wichtig. Die
+Sandbox-Definition friert den Repository-Stand beim Import ein, sodass Änderungen am Code erst nach
+einem erneuten Import wirksam werden. Nach einem Neustart des Hosts müssen die verschachtelten
+Schichten zudem manuell in fester Reihenfolge wieder hochgefahren werden.
+
+Diese Punkte sind kein Mangel der Untersuchung, sondern Erfahrungswerte, die in die Bewertung der
+Plattform einfließen.
+
+
+\section{Ergebnisse}
+\label{sec:uc1-ergebnisse}
+
+Die Werkzeuge wurden gegen das Zielsystem ausgeführt und ihre Funde mit der verifizierten
+Referenzbasis aus Abschnitt~\ref{subsec:uc1-groundtruth} abgeglichen. Dieser Abschnitt stellt zuerst
+einen Überblick der Funde vor, ordnet sie dann je Schwachstelle in einer Trefferbilanz ein und
+arbeitet schließlich die systematischen blinden Flecken der Werkzeugklassen heraus.
+
+\subsection{Überblick der Funde}
+\label{subsec:uc1-funde}
+
+Vor der eigentlichen Bewertung wurde der Ist-Zustand des Zielsystems verifiziert. Dabei zeigten sich
+zwei Abweichungen vom vorgesehenen Zustand. Die verwundbare PHP-Anwendung samt Datenbank war wie in
+Abschnitt~\ref{subsec:uc1-zielsystem-aufbau} beschrieben nicht aktiv. Zusätzlich waren die schwachen
+SSH-Anmeldeoptionen (\texttt{PasswordAuthentication}, \texttt{PermitRootLogin},
+\texttt{PermitEmptyPasswords}) zur Laufzeit unwirksam, weil ein Cloud-Init-Drop-in sie überschreibt.
+Die schwachen kryptografischen Verfahren des SSH-Dienstes blieben dagegen aktiv. Diese Drift wurde
+festgehalten und die betroffenen Punkte aus der Wertung herausgenommen.
+
+Tabelle~\ref{tab:uc1-kennzahlen} fasst die Funde je Werkzeug zusammen. Die Zahlen sind nicht direkt
+vergleichbar, weil die Werkzeuge unterschiedliche Perspektiven abdecken und unterschiedlich zählen.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{3.0cm}p{1.3cm}p{4.0cm}p{3.2cm}}
+\hline
+\textbf{Werkzeug} & \textbf{Persp.} & \textbf{Methode} & \textbf{Funde} \\
+\hline
+Nuclei & A1 & Template-/Exploit-Matching & Recall rund 70\,\% (Exploit-Ebene) \\
+OpenVAS (unauth) & A1 & aktives NVT-Probing & 41 \\
+OpenVAS (credentialed) & A2 & SSH-Login und Paketabgleich & 80 (plus 38 Paket-CVEs) \\
+Lynis & A3 & lokales Host-Audit & Index 63, 59 Hinweise \\
+OpenSCAP/CIS & A3 & XCCDF-Compliance (CIS L1) & 218 bestanden / 125 offen \\
+Trivy & A4 & statische Image-Analyse & 631 (2 von 4 Images) \\
+Nessus & A1/A2 & -- & nicht lauffähig (Lizenz) \\
+\hline
+\end{tabular}
+\caption{Funde je Werkzeug. Alle quelloffenen Werkzeuge lieferten reproduzierbare Ergebnisse, Nessus war im neu aufgebauten Setup nicht nutzbar.}
+\label{tab:uc1-kennzahlen}
+\end{table}
+
+In der unauthentifizierten Perspektive (A1) lieferte OpenVAS 41 Funde über aktives Probing. Nuclei
+fand auf Exploit-Ebene weniger, dafür gezielter, etwa die schwache SSH-Kryptografie und die anonyme
+SMB-Freigabe. Auffällig war bei Nuclei eine hohe Quote falscher Positivmeldungen im oberen
+Schweregrad: von sieben als hoch oder kritisch gemeldeten Funden waren sechs falsch.
+
+In der credentialed Perspektive (A2) stieg OpenVAS von 41 auf 80 Funde, weil der Login den
+installierten Paketstand des Hosts auslesbar macht. Dazu kamen 38 weitere paketbezogene CVEs. Dieser
+Zuwachs zeigt den Wert eines authentifizierten Scans gegenüber einem reinen Außenblick.
+
+In der Host-Perspektive (A3) vergab Lynis einen Härtungsindex von 63 und 59 Hinweise. OpenSCAP prüfte
+gegen ein CIS-Profil und meldete 218 bestandene und 125 offene Prüfpunkte. In der Container-Perspektive
+(A4) meldete Trivy 631 Funde, allerdings nur für zwei der vier Images, da die übrigen nicht erfasst
+wurden.
+
+\subsection{Trefferbilanz gegen die Referenzbasis}
+\label{subsec:uc1-trefferbilanz}
+
+Aussagekräftiger als die reinen Zahlen ist der Abgleich gegen die bekannten, geplanten
+Schwachstellen. Tabelle~\ref{tab:uc1-trefferbilanz} zeigt für jede Schwachstelle, welches Werkzeug
+sie erkannt hat.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{3.2cm}p{1.1cm}p{1.6cm}p{1.6cm}p{1.0cm}p{1.3cm}p{1.0cm}}
+\hline
+\textbf{Schwachstelle} & \textbf{Nuclei} & \textbf{OpenVAS\newline unauth.} & \textbf{OpenVAS\newline cred.} & \textbf{Lynis} & \textbf{Open-\newline SCAP} & \textbf{Trivy} \\
+\hline
+Apache 2.4.49 (nicht ausnutzbar) & tw. & tw. & tw. & -- & -- & nein \\
+Grafana (ausnutzbar) & ja & ja & -- & -- & -- & ja \\
+Tomcat Ghostcat & nein & ja & -- & -- & -- & n.\,g. \\
+Jenkins & tw. & tw. & -- & -- & -- & n.\,g. \\
+FTP anonymous / weak & nein & ja & ja & -- & -- & -- \\
+SSH schwache Krypto & nein & tw. & ja & ja & -- & -- \\
+World-writable Dateien & nein & nein & nein & nein & ja & -- \\
+SUID cp/find/vim & nein & nein & nein & nein & nein & -- \\
+sudoers NOPASSWD & nein & nein & nein & nein & nein & -- \\
+TFTP (UDP/69) & nein & nein & nein & ja & -- & -- \\
+\hline
+\end{tabular}
+\caption{Trefferbilanz gegen die Referenzbasis. ja = erkannt, tw. = teilweise oder abhängig, nein = verpasst, -- = nicht im Aufgabenbereich, n.\,g. = nicht gescannt.}
+\label{tab:uc1-trefferbilanz}
+\end{table}
+
+Die Matrix macht mehrere Muster sichtbar. Die ausnutzbare Grafana-Lücke wurde von mehreren Werkzeugen
+zuverlässig erkannt, sowohl netzwerkbasiert als auch über die Container-Analyse. Die Apache-Lücke ist
+zwar in der verwundbaren Version vorhanden, in der konkreten Konfiguration aber nicht ausnutzbar. Die
+versionsbasierten Werkzeuge melden sie deshalb nur abhängig vom gewählten Maßstab. Die host-lokalen
+Schwächen sind für die Netzwerk-Scanner erwartungsgemäß unsichtbar. Auffällig ist, dass die
+manipulierten SUID-Bits und die unsicheren sudoers-Regeln von keinem einzigen automatisierten
+Werkzeug erkannt wurden.
+
+\subsection{Recall, Precision und blinde Flecken}
+\label{subsec:uc1-blindspots}
+
+Beim Recall wirkt sich die in Abschnitt~\ref{subsec:uc1-metriken} beschriebene Wahl des Nenners
+deutlich aus. Legt man die reine Inventarsicht an, in der jede vorhandene CVE-Version zählt, schneiden
+die versionsbasierten Werkzeuge gut ab, weil sie auch die nicht ausnutzbare Apache-Lücke melden.
+Legt man die Sicht der tatsächlichen Ausnutzbarkeit an, fällt diese Lücke heraus, und das exploit-nahe
+Vorgehen von Nuclei rückt nach vorne. Keiner der beiden Maßstäbe ist allein richtig. Erst ihre
+Offenlegung macht den Vergleich fair.
+
+Bei der Precision fällt Nuclei im oberen Schweregrad ab. Sechs von sieben als hoch oder kritisch
+gemeldeten Funden waren falsch. Ein hoher Findings-Zähler ist daher ohne die Prüfung gegen die
+Referenzbasis irreführend, was die in Abschnitt~\ref{subsec:uc1-metriken} getroffene Entscheidung
+gegen den reinen Zähler bestätigt.
+
+Der eigentliche Erkenntnisgewinn liegt in den blinden Flecken. Jede Werkzeugklasse übersieht
+systematisch etwas Bestimmtes. Die
+Netzwerk-Scanner sehen nur, was exponiert und erreichbar ist. Sie sind auf TCP fokussiert, sodass der
+TFTP-Dienst über UDP durchfällt, und sie können eine verwundbare Version nicht von einer tatsächlich
+ausnutzbaren Lücke trennen. Der credentialed-Scan gewinnt durch den Host-Paketstand viele zusätzliche
+Funde, bleibt aber blind für das Innere der Container, deren Pakete nicht im Host vorliegen. Die
+Host-Audits sehen die Systemkonfiguration von innen. OpenSCAP ist als einziges Werkzeug in der Lage,
+die world-writable Dateien zu erkennen. Beide Host-Audits verpassen aber die manipulierten SUID-Bits
+und die sudoers-Regel, weil ihre Prüfungen generische Richtlinien abfragen und nicht die konkret
+veränderten Dateien. Trivy ist das einzige Werkzeug, das in die Container-Images hineinschaut, und
+findet die Grafana-Lücke sofort. Es verpasst aber die quellcode-kompilierte Apache-Instanz.
+
+Am deutlichsten zeigt sich die Grenze der Automatisierung bei den gezielten Host-Manipulationen. Die
+SUID-Bits und die unsichere sudoers-Regel entkamen allen automatisierten Werkzeugen. Erst die manuelle
+Prüfung im Rahmen der Referenzbasis deckte sie auf.
+
+
+\section{Diskussion}
+\label{sec:uc1-diskussion}
+
+Die Ergebnisse lassen sich zu drei übergreifenden Befunden verdichten. Diese verbinden den Use Case
+mit der Bewertung der Plattform, mit den Forschungsfragen und mit dem Begriff der Cyber-Resilienz.
+
+\subsection{Drei übergreifende Befunde}
+\label{subsec:uc1-befunde}
+
+Der erste Befund betrifft den Unterschied zwischen einer verwundbaren Version und einer tatsächlich
+ausnutzbaren Lücke. Der Apache-Dienst trägt die Version mit CVE-2021-41773, ist in seiner konkreten
+Konfiguration aber nicht angreifbar und antwortet auf den Ausnutzungsversuch mit einem 403. Die
+versionsbasierten Werkzeuge melden ihn dennoch als verwundbar. Erst die Laufzeitprüfung zeigt den
+realen Status. Für eine Bewertung der Resilienz folgt daraus, dass reine Findings-Zahlen ohne den
+Kontext der Ausnutzbarkeit irreführend sind. Eine hohe Zahl gemeldeter Schwachstellen sagt für sich
+genommen wenig über das tatsächliche Risiko aus.
+
+Der zweite Befund betrifft die Drift zwischen vorgesehenem und tatsächlichem Zustand. Die absichtlich
+gesetzten schwachen SSH-Anmeldeoptionen waren zur Laufzeit unwirksam, weil ein Cloud-Init-Drop-in der
+Plattform sie überschreibt. Die schwachen kryptografischen Verfahren blieben dagegen aktiv. Die
+Absicht in der Infrastrukturbeschreibung entspricht also nicht automatisch dem Laufzeitzustand. Genau
+deshalb ist die in Abschnitt~\ref{subsec:uc1-groundtruth} beschriebene Verifikation gegen eine
+unabhängige Referenzbasis notwendig. Ohne sie wären falsche Schlüsse über die Erkennungsleistung der
+Werkzeuge gezogen worden. Auch die nicht eingerichtete PHP-Anwendung gehört zu dieser Kategorie.
+
+Der dritte Befund betrifft die Lizenzierung. Der kommerzielle Scanner Nessus lieferte kein
+verwertbares Ergebnis. Jeder Scan wurde von der Lizenzprüfung blockiert, die das Host-Limit als
+überschritten meldete, obwohl nur wenige Adressen gescannt worden waren und die Lizenzauslastung null
+anzeigte. Auch mit der freien Universitätslizenz und mehreren Anpassungen ließ sich kein vollständiger
+Scan durchführen. Die quelloffenen Werkzeuge lieferten im selben Setup vollständige und wiederholbare
+Ergebnisse. Für eine Cyber Range als Forschungsumgebung, die auf wiederholte und kontrollierte
+Durchläufe angewiesen ist, erwiesen sich die quelloffenen Werkzeuge damit als praktikabler.
+
+\subsection{Komplementäre Werkzeugklassen}
+\label{subsec:uc1-komplementaritaet}
+
+Über alle Perspektiven hinweg zeigt sich, dass es keinen einzelnen besten Scanner gibt. Die Werkzeuge
+bilden komplementäre Schichten. Die Netzwerk-Scanner erfassen die exponierten Dienste, der
+credentialed-Scan ergänzt den Paketstand des Hosts, die Host-Audits bewerten die Systemhärtung und
+die Container-Analyse schaut in die Images hinein. Erst die Kombination dieser Schichten ergibt ein
+vollständiges Bild. Selbst dann bleiben gezielte Host-Manipulationen wie die SUID-Bits und die
+sudoers-Regel nur über eine manuelle Prüfung auffindbar.
+
+Für die Forschungsumgebung ist weniger die Leistung eines einzelnen Werkzeugs entscheidend als die
+Tatsache, dass die Umgebung den reproduzierbaren und kontrollierten Vergleich mehrerer Werkzeugklassen
+gegen eine bekannte Referenzbasis überhaupt erst möglich macht. Bezogen auf die Cyber-Resilienz aus
+Abschnitt~\ref{sec:cyber-resilienz} unterstützt der Use Case vor allem die vorausschauende Dimension.
+Er macht die vorhandenen Schwächen eines Systems messbar und nachvollziehbar, bevor sie in einem
+realen Angriff zum Tragen kommen. Die Umgebung liefert damit die Grundlage, um solche Untersuchungen
+wiederholbar durchzuführen.
+
+\subsection{Rückbezug zu den Forschungsfragen und Kriterien}
+\label{subsec:uc1-rueckbezug}
+
+Der Use Case beantwortet mehrere der Untersuchungsfragen konkret. Er zeigt, dass sich ein
+reproduzierbarer Use Case auf der gewählten Plattform modellieren lässt (UF3). Die Einbindung der
+externen Werkzeuge über Ansible und Docker, etwa der OpenVAS-Container und Nuclei, belegt die
+Integrationsfähigkeit der Umgebung für gängige Werkzeuge (UF4). Die Ground-Truth-Methodik zusammen
+mit den dokumentierten Drift-Fällen liefert eine konkrete Bewertung der Reproduzierbarkeit (UF5). Die
+Drift durch das Cloud-Init-Drop-in und der fehlgeschlagene MySQL-Task sind dabei keine Nebensächlichkeiten,
+sondern zeigen, an welchen Stellen Reproduzierbarkeit in der Praxis bricht.
+
+Auch die Bewertungskriterien aus Kapitel~\ref{chap:auswahl} werden durch den Use Case bestätigt und
+geschärft. Die betrieblichen Herausforderungen aus Abschnitt~\ref{subsec:uc1-betrieb} betrafen direkt
+die Reproduzierbarkeit (K1), die Automatisierung (K2) und die Wartbarkeit (K7). Konkret waren das die
+Anpassung der OpenStack-Konfiguration, damit die Sandbox überhaupt allokiert werden konnte, das
+Löschen und Neuimportieren der Sandbox-Definition nach jeder Änderung und der manuelle Wiederanlauf
+der verschachtelten Schichten nach einem Neustart. Die Einbindung der Scanner als Container betraf die
+Integrationsfähigkeit (K3). Die Plattform hat sich für den Use Case als tragfähig erwiesen, allerdings
+nicht ohne diesen manuellen Aufwand. Diese Erfahrungswerte fließen in die abschließende Bewertung der
+Arbeit ein.

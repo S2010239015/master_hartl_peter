@@ -13,7 +13,6 @@
 % Zulässige Optionen in [..]: 
 %    Typ der Arbeit (type=): 'master' (default), 'bachelor', 'diploma', 'phd', 'internship'
 %    Theme der Titelseite (theme=): 'default' (default), 'fhooe24'
-%    Als Exposé verwenden: 'proposal' oder 'proposal=true' 
 %    Hauptsprache im Dokument (language=): 'german' (default), 'english'
 %    Sprache der Titelseite (titlelanguage=): 'german', 'english' (default is main language)
 %    Umwandlung in typografische Anführungszeichen: 'smartquotes'
@@ -24,9 +23,12 @@
 \graphicspath{{images/}}  % Verzeichnis mit Bildern und Grafiken
 \bibliography{hgbreferences} % Biblatex-Literaturdatei (hgbreferences.bib)
 \usepackage{pifont}
+\usepackage{tikz}
 \newcommand{\cmark}{\ding{51}} % ✓
 \newcommand{\xmark}{\ding{55}} % ✗
-
+\makeatletter
+\renewcommand{\verbatim@font}{\normalfont\ttfamily\footnotesize}
+\makeatother
 %%%-----------------------------------------------------------------------------
 \begin{document}
 %%%-----------------------------------------------------------------------------
@@ -35,33 +37,32 @@
 % Angaben für die Titelei (Titelseite, Erklärung etc.)
 %%%-----------------------------------------------------------------------------
 
-\title{Vorprojektbericht}
-\subtitle{Aufbau einer CyberRange als Forschungsumgebung\\
+\title{Aufbau einer CyberRange als Forschungsumgebung\\
 zur Untersuchung von Cyber-Resilienz}
-\author{Peter Hartl}
+\author{Peter Hartl} 
 
-\programtype{Fachhochschul-Masterstudiengang} % oder Fachhochschul-Bachelorstudiengang
+\programtype{Fachhochschul-Masterstudiengang}
 \programname{Secure Information Systems}
 \institution{Fachhochschule Oberösterreich}
 
 \placeofstudy{Hagenberg}
-\dateofsubmission{2026}{01}{30} % {JJJJ}{MM}{TT}
+\dateofsubmission{2026}{05}{31} % {JJJJ}{MM}{TT} -- an tatsächlichen Abgabetermin anpassen
 
 % Liste der Betreuungspersonen, bis zu 4 sind möglich, Titel in [] ist optional
 \advisor{FH-Prof.\ DI Robert Kolmhofer}
-%\advisor[Zweitbetreuerin]{FH-Prof.\textsuperscript{in} Susanna A.~D. Visor, PhD}
 
 \license{cc}      % Unter Creative Commons Lizenz veröffentlichen (empfohlen)
-%\license{strict} % Restriktieve Lizenz, "Alle Rechte vorbehalten"
+%\license{strict} % Restriktive Lizenz, "Alle Rechte vorbehalten"
 
 %%%-----------------------------------------------------------------------------
 \frontmatter                                       % Titelei (röm. Seitenzahlen)
 %%%-----------------------------------------------------------------------------
 
 \maketitle
+\include{front/vorwort}      % optional
+\include{front/kurzfassung}  % dt. Zusammenfassung (max. 1 Seite)
+\include{front/abstract}     % engl. Abstract (max. 1 Seite)
 \tableofcontents
-
-
 
 %%%-----------------------------------------------------------------------------
 \mainmatter                             % Hauptteil (ab hier arab. Seitenzahlen)
@@ -70,29 +71,34 @@ zur Untersuchung von Cyber-Resilienz}
 \include{chapters/01_einleitung}
 \include{chapters/02_grundlagen}
 \include{chapters/03_stand_der_technik}
-\include{chapters/04_technische_erkundung}
-\include{chapters/041_technische_erkundung}
-\include{chapters/05_kriterien}
-\include{chapters/06_plattformvergleich}
-\include{chapters/07_auswahl}
+\include{chapters/04_proof_of_concept}
+\include{chapters/05_anforderungen_auswahl}
+\include{chapters/06_use_case_1}
+
+% --- 5  Konzeption der Use Cases & Evaluationsmethodik (NEU) ------------------
+%\include{chapters/09_konzeption}
+
+% --- 6  Implementierung in CyberRangeCZ (NEU) --------------------------------
+%\include{chapters/10_implementierung}
+
+% --- 7  Evaluation & Diskussion (NEU) ----------------------------------------
+%\include{chapters/11_evaluation}
+
+% --- 8  Fazit & Ausblick (Umbau von 08_ausblick) -----------------------------
 \include{chapters/08_ausblick}
 
 %%%-----------------------------------------------------------------------------
-\appendix                                                               % Anhang 
-%%%-----------------------------------------------------------------------------
-
-%%%\include{back/anhang_a} % Technische Ergänzungen
-%%%\include{back/anhang_b} % Inhalt der CD-ROM/DVD
-%%%\include{back/anhang_c} % Chronologische Liste der Änderungen
-%%%\include{back/anhang_d} % Quelltext dieses Dokuments
+\appendix
+\include{back/anhang_quelltext_uc1}
+%\include{back/anhang_b}
+%\include{back/anhang_c}
+%\include{back/anhang_d}
 
 %%%-----------------------------------------------------------------------------
 \backmatter                          % Schlussteil (Quellenverzeichnis und dgl.)
 %%%-----------------------------------------------------------------------------
 
 \MakeBibliography % Quellenverzeichnis
-
-
 
 %%%-----------------------------------------------------------------------------
 \end{document}

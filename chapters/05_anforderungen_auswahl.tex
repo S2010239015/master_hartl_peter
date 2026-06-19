@@ -1,0 +1,164 @@
+\chapter{Anforderungen und Plattformauswahl}
+\label{chap:auswahl}
+
+Dieses Kapitel überführt die in Kapitel~\ref{chap:stand-der-technik} identifizierte Forschungslücke
+und die in Kapitel~\ref{chap:poc} gewonnenen praktischen Erkenntnisse in eine konkrete
+Plattformwahl. Dazu werden zuerst die Anforderungen an eine Forschungs-Cyber-Range abgeleitet und zu
+einem Kriterienkatalog verdichtet. Anschließend werden die Kandidaten anhand dieser Kriterien
+verglichen und es wird eine begründete Auswahl getroffen.
+
+\section{Anforderungen und Bewertungskriterien}
+\label{sec:anforderungen-kriterien}
+
+Aus Forschungsperspektive ergeben sich an eine Cyber Range Anforderungen, die über klassische
+Trainingsfunktionen hinausgehen.
+
+Zentrale Voraussetzung ist die Reproduzierbarkeit. Identische Szenarien müssen sich unter
+kontrollierten Randbedingungen wiederholt ausführen lassen, damit Ergebnisse zwischen Werkzeugen,
+Konfigurationen oder Methoden vergleichbar werden. Das betrifft sowohl die technische Bereitstellung
+der Umgebung als auch die Nachvollziehbarkeit des Szenarioablaufs und der Messpunkte.
+
+Eng damit verbunden ist ein hoher Automatisierungsgrad. Szenarien und Umgebungen sollten möglichst
+einfach beschrieben und automatisiert ausgerollt werden können, etwa über Infrastructure-as-Code.
+Ebenso wichtig ist die Erweiterbarkeit, also die Möglichkeit, neue Szenarien, zusätzliche Messpunkte
+oder weitere Integrationen zu ergänzen. Für die Erhebung und Auswertung von Messdaten kommen in
+modernen Umgebungen häufig Observability-Stacks zum Einsatz, etwa Prometheus und Grafana für
+Metriken oder der Elastic Stack und Grafana Loki für Logs.
+
+Ein weiteres Kernkriterium ist die Integrationsfähigkeit externer Werkzeuge. Da in dieser Arbeit
+konkrete Cyber-Resilienz-Use-Cases umgesetzt und bewertet werden, muss die Plattform Schnittstellen
+für Monitoring, Detection und Auswertung unterstützen. Resilienzbezogene Untersuchungen setzen zudem
+voraus, dass sich das Systemverhalten über die Zeit beobachten lässt, was eine geeignete
+Beobachtbarkeit über Logs, Metriken und Events erfordert.
+
+Schließlich sind Betrieb und Governance zu berücksichtigen. Eine Forschungsumgebung muss isoliert
+und sicher betrieben werden können und sollte Mehrbenutzerbetrieb mit Rollen- und Zugriffsmodellen
+unterstützen. Praktisch relevant sind außerdem die Dokumentationsqualität, die Aktivität der
+Community, das Lizenzmodell und der Bereitstellungsaufwand, da sie die Machbarkeit der Umsetzung
+stark beeinflussen.
+
+Aus diesen Anforderungen leitet sich der folgende Kriterienkatalog ab. Er bildet die
+Bewertungsgrundlage für den späteren Vergleich und ist so gewählt, dass er die Ziele der Arbeit
+abbildet, ohne eine bestimmte Plattform vorauszusetzen.
+
+\textbf{K1 -- Reproduzierbarkeit und Wiederholbarkeit:}
+Kann die Plattform identische Umgebungen und Szenarien in gleicher Konfiguration wiederholt
+bereitstellen, etwa durch versionierbare Definitionen und deterministische Provisionierung?
+
+\textbf{K2 -- Automatisierung und Lifecycle-Steuerung:}
+Unterstützt die Plattform den Lifecycle von Umgebungen (Provisionierung, Start/Stop, Reset, Cleanup)
+weitgehend automatisiert und mit geringem manuellem Betriebsaufwand?
+
+\textbf{K3 -- Integrationsfähigkeit externer Werkzeuge:}
+Erlaubt die Plattform die Einbindung zusätzlicher Tools innerhalb der Sandbox oder am Rand der
+Umgebung (z.\,B.\ Sensoren, Agents, SIEM/Logging, Monitoring), sodass Vergleiche unter gleichen
+Bedingungen möglich sind?
+
+\textbf{K4 -- Beobachtbarkeit und Datenzugang:}
+Stellt die Plattform Mechanismen bereit, um Mess- und Auswertungsdaten systematisch zu erfassen und
+zugänglich zu machen (z.\,B.\ Logs, Metriken, Events, Netzwerkdaten) und diese für Analysen zu
+exportieren oder weiterzuverarbeiten?
+
+\textbf{K5 -- Zugriffsmöglichkeiten und Nutzerinteraktion:}
+Bietet die Plattform praktikable Zugriffsmöglichkeiten auf die bereitgestellten Systeme (z.\,B.\ SSH
+sowie optional GUI-/Web-Konsole/RDP/VNC) und unterstützt sie eine nutzerfreundliche Interaktion
+während der Durchführung?
+
+\textbf{K6 -- Benutzer-, Rollen- und Rechteverwaltung:}
+Unterstützt die Plattform Mehrbenutzerbetrieb mit Rollen- und Gruppenkonzepten, nachvollziehbarer
+Zugriffskontrolle und klaren Mechanismen für Authentisierung und Autorisierung?
+
+\textbf{K7 -- Wartbarkeit, Dokumentation und Community:}
+Ist die Plattform realistisch betreib- und wartbar (z.\,B.\ nachvollziehbarer Installations- und
+Update-Prozess), gut dokumentiert und durch aktive Weiterentwicklung sowie Austausch- und
+Support-Kanäle unterstützt?
+
+\section{Vergleichende Bewertung}
+\label{sec:vergleich}
+
+Auf Basis der Kriterien K1--K7 und der praktischen Erprobung aus Kapitel~\ref{chap:poc} werden die
+quelloffenen Kandidaten CyberRangeCZ, OCR und KYPO gegenübergestellt. Tabelle~\ref{tab:plattformvergleich-matrix}
+fasst die Bewertung zusammen.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{5.2cm}ccc}
+\hline
+\textbf{Kriterium} & \textbf{CyberRangeCZ} & \textbf{OCR} & \textbf{KYPO} \\
+\hline
+\textbf{K1 Reproduzierbarkeit \& Wiederholbarkeit}      & \cmark & \cmark & \cmark \\
+\textbf{K2 Automatisierung \& Lifecycle-Steuerung}       & \cmark & $\sim$ & \cmark \\
+\textbf{K3 Integrationsfähigkeit externer Werkzeuge}     & $\sim$ & ?      & ?      \\
+\textbf{K4 Beobachtbarkeit \& Datenzugang}               & \cmark & ?      & \cmark \\
+\textbf{K5 Zugriffsmöglichkeiten \& Nutzerinteraktion}   & \cmark & ?      & \cmark \\
+\textbf{K6 Benutzer-, Rollen- \& Rechteverwaltung}       & \cmark & \cmark & \cmark \\
+\textbf{K7 Wartbarkeit, Dokumentation \& Community}      & \cmark & $\sim$ & \xmark \\
+\hline
+\end{tabular}
+\caption{Vergleichsmatrix der Plattformen anhand der Kriterien K1--K7 (\cmark\ erfüllt, $\sim$ teilweise erfüllt, \xmark\ nicht erfüllt, ? offen).}
+\label{tab:plattformvergleich-matrix}
+\end{table}
+
+Die Vergleichsmatrix in Tabelle~\ref{tab:plattformvergleich-matrix} zeigt, dass CyberRangeCZ in
+mehreren für diese Arbeit zentralen Kriterien nachweisbar stark abschneidet. Insbesondere die
+praktische Erprobung im PoC belegt einen hohen Grad an Automatisierung und Lifecycle-Steuerung (K2)
+sowie praktikable Zugriffsmöglichkeiten und Nutzerinteraktion (K5). Auch der Mehrbenutzerbetrieb und
+die Zugriffskontrolle (K6) sind durch die vorhandenen Plattformkomponenten und das Portal-Konzept
+klar adressiert. Zusammen mit der umfangreichen Dokumentation und aktiven Weiterentwicklung (K7)
+reduziert dies das Umsetzungsrisiko.
+
+KYPO erfüllt konzeptionell ebenfalls wesentliche Anforderungen, insbesondere hinsichtlich
+reproduzierbarer Umgebungen und automatisierter Bereitstellung (K1, K2). Es basiert jedoch auf einer
+älteren technischen Architektur und wird im Projektkontext zunehmend durch CyberRangeCZ abgelöst.
+Dadurch entsteht im Vergleich ein Nachhaltigkeitsrisiko (K7), das für eine längerfristige
+Forschungsumgebung relevant ist. OCR verfolgt einen modularen Ansatz, jedoch
+konnten zentrale Punkte in der Erprobung nicht in gleicher Tiefe praktisch verifiziert werden.
+Entsprechend werden einzelne Kriterien als teilweise erfüllt oder offen bewertet. Das betrifft vor
+allem die konkrete technische Bereitstellung einer vollständigen Übungskette im PoC sowie die daraus
+ableitbare Beurteilung einzelner Betriebs- und Zugriffsaspekte. Zusätzlich wirkt die verfügbare
+Dokumentation im Vergleich weniger umfassend und die Community-Aktivität ist weniger ausgeprägt, was
+die Fehlersuche und den Wissenstransfer im Implementierungsprozess erschweren kann.
+
+\section{Gewichtung und Auswahl der Plattform}
+\label{sec:gewichtung-auswahl}
+
+Die Auswahl der Plattform stützt sich auf den Kriterienkatalog aus
+Abschnitt~\ref{sec:anforderungen-kriterien} und die vergleichende Bewertung in
+Tabelle~\ref{tab:plattformvergleich-matrix}. Sie bildet die Grundlage für die Umsetzung der Use
+Cases in den folgenden Kapiteln.
+
+\subsection{Gewichtung der Kriterien}
+\label{subsec:gewichtung}
+
+Für das Forschungsvorhaben stehen Reproduzierbarkeit und Wiederholbarkeit (K1), Automatisierung und
+Lifecycle-Steuerung (K2), Integrationsfähigkeit externer Werkzeuge (K3) sowie Beobachtbarkeit und
+Datenzugang (K4) im Vordergrund, da sie die Vergleichbarkeit von Experimenten und die spätere
+Evaluation von Cyber-Resilienz-Use-Cases direkt beeinflussen. Benutzer-, Rollen- und
+Rechteverwaltung (K6) sowie Wartbarkeit, Dokumentation und Community (K7) sind ebenfalls wesentlich,
+weil sie die langfristige Nutzbarkeit und den stabilen Betrieb einer Forschungsumgebung
+beeinflussen. Zugriffsmöglichkeiten (K5) werden unterstützend berücksichtigt, da sie die praktische
+Durchführbarkeit von Übungen und Experimenten maßgeblich erleichtern.
+
+\subsection{Begründete Auswahl}
+\label{subsec:auswahl}
+
+Aus Tabelle~\ref{tab:plattformvergleich-matrix} ergibt sich CyberRangeCZ als die am robustesten
+begründbare Option. Im Unterschied zu den Alternativen konnten zentrale Kriterien nicht nur anhand
+von Dokumentation, sondern zusätzlich durch den erfolgreich umgesetzten PoC praktisch untermauert
+werden. Damit liegen belastbare Hinweise vor, dass die Plattform den automatisierten Aufbau und
+Betrieb von Umgebungen (K2) sowie einen praktikablen Zugriff und die Durchführung von
+Trainingsinstanzen (K5) unterstützt. Darüber hinaus sprechen die aktuelle Weiterentwicklung, die
+verfügbare Dokumentation und die Support- und Community-Strukturen (K7) sowie die vorhandenen
+Mechanismen für Mehrbenutzerbetrieb und Zugriffskontrolle (K6) für ein geringeres Implementierungs-
+und Betriebsrisiko.
+
+KYPO wird als fachlich relevanter Vorgängeransatz eingeordnet, weist jedoch im Vergleich ein
+erhöhtes Nachhaltigkeitsrisiko auf, da der Schwerpunkt der Weiterentwicklung auf CyberRangeCZ liegt.
+OCR stellt zwar einen interessanten modularen Ansatz dar, konnte in der Erprobung jedoch nicht in
+allen entscheidenden Punkten praktisch verifiziert werden. Entsprechend wird OCR nicht als primäre
+Zielplattform gewählt, kann aber als Referenz sowie für eine mögliche spätere Erweiterung oder
+Gegenüberstellung herangezogen werden.
+
+Auf Basis der Kriteriengewichtung und der in der Erprobung gewonnenen Erkenntnisse wird daher
+CyberRangeCZ als Plattform dieser Arbeit ausgewählt.

@@ -1,0 +1,298 @@
+\chapter{Technische Erprobung: Proof of Concept}
+\label{chap:poc}
+
+Bevor eine Plattform ausgewählt wird, werden die beiden zentralen quelloffenen Kandidaten praktisch
+erprobt. Ziel der technischen Erprobung ist es, die grundsätzliche Machbarkeit eines selbst
+betriebenen Aufbaus zu überprüfen. Im Fokus steht kein Produktivbetrieb, sondern ein
+nachvollziehbarer Proof of Concept (PoC), der zeigt, ob und wie sich die Plattformen auf einem Host
+deployen und betreiben lassen. Die Ergebnisse fließen anschließend in die Bewertung in
+Kapitel~\ref{chap:auswahl} ein.
+
+\section{Proof of Concept: CyberRangeCZ}
+\label{sec:poc-crcz}
+
+Der PoC für CyberRangeCZ demonstriert zentrale Abläufe der Plattform: Installation und Deployment,
+Erstzugriff über die Weboberflächen, Import einer Trainingsdefinition, Bereitstellung einer Sandbox
+sowie den Zugriff auf die bereitgestellten Systeme. Verwendet wurde die CyberRangeCZ-Lite-Variante,
+da sie einen schnellen Einstieg in die Plattformmechanik ermöglicht und zugleich die wesentlichen
+Konzepte (Portal, Trainingsdefinitionen, Pools, Sandboxes) abbildet \cite{CyberRangeCZDevopsLite}.
+
+\subsection{Testumgebung}
+\label{sec:poc-testumgebung}
+
+Der PoC wurde auf einer dedizierten Maschine mit Ubuntu 24.04 LTS durchgeführt. Die verwendeten
+Ressourcen (CPU, RAM und Storage) sind in Abbildung~\ref{fig:poc-hardware} dargestellt.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{poc_hardware.png}
+    \caption{Testumgebung für den PoC (eigene Aufnahme)}
+    \label{fig:poc-hardware}
+\end{figure}
+
+\subsection{Installation und Deployment der PoC-Umgebung}
+\label{sec:poc-installation}
+
+Die Installation folgt dem Ansatz, die notwendigen Virtualisierungs- und Container-Komponenten lokal
+bereitzustellen und das eigentliche Deployment über das bereitgestellte PoC-Repository automatisiert
+auszuführen. Dazu wurden zunächst Basiswerkzeuge sowie KVM/libvirt und Docker installiert.
+KVM/libvirt stellt die Virtualisierungsbasis bereit (VM-Lifecycle und Netzwerk), während Docker
+genutzt wird, um eine vorbereitete Umgebung auszuführen, in der Vagrant mit libvirt-Anbindung zur
+Provisionierung verwendet wird.
+
+\begin{verbatim}
+sudo apt install -y \
+  git tmux curl \
+  qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils cpu-checker \
+  docker.io
+\end{verbatim}
+
+Im nächsten Schritt wurden die relevanten Dienste aktiviert und der Benutzer für die Verwendung von
+\texttt{libvirt}, KVM und Docker berechtigt. Damit sind Virtualisierung und Containerbetrieb ohne
+ständige Root-Kontexte nutzbar.
+
+\begin{verbatim}
+sudo systemctl enable --now libvirtd docker
+sudo usermod -aG libvirt,kvm,docker $USER
+newgrp docker
+\end{verbatim}
+
+Anschließend wurde das PoC-Repository geklont und die libvirt-URI gesetzt, sodass Vagrant eindeutig
+die System-libvirt-Instanz adressiert. Wegen der langen Laufzeit und der vielen Ausgaben wurde der
+Prozess in einer tmux-Session gestartet.
+
+\begin{verbatim}
+git clone https://github.com/cyberrangecz/devops-crczp-lite.git
+cd devops-crczp-lite
+export LIBVIRT_DEFAULT_URI=qemu:///system
+tmux new -s crczp
+\end{verbatim}
+
+Das eigentliche Deployment erfolgt über einen Docker-Container, der Vagrant mit libvirt-Unterstützung
+bereitstellt. Die relevanten Sockets und Verzeichnisse werden in den Container gemountet, damit
+Vagrant (1) auf libvirt zugreifen kann, (2) seine Vagrant-States dauerhaft speichern kann und (3) im
+aktuellen Arbeitsverzeichnis die Definitionsdateien findet. Der Parameter \texttt{--network host}
+stellt sicher, dass Netzwerkoperationen und lokale Zugriffe (z.\,B.\ auf die Weboberfläche) ohne
+zusätzliche Container-NAT-Komplexität funktionieren.
+
+\begin{verbatim}
+docker run -it --rm \
+  -e LIBVIRT_DEFAULT_URI \
+  -v /var/run/libvirt/:/var/run/libvirt/ \
+  -v ~/.vagrant.d:/.vagrant.d \
+  -v $(realpath "${PWD}"):${PWD} \
+  -w "${PWD}" \
+  --network host \
+  vagrantlibvirt/vagrant-libvirt:latest \
+  vagrant up
+\end{verbatim}
+
+Nach erfolgreichem Abschluss wurden eine URL für das Web-Portal sowie initiale Zugangsdaten
+ausgegeben. Diese Ausgabe ist in Abbildung~\ref{fig:poc-deploy} dokumentiert.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\linewidth]{poc_deploy_done.png}
+    \caption{Erfolgreiches Deployment der PoC-Umgebung (eigene Aufnahme)}
+    \label{fig:poc-deploy}
+\end{figure}
+
+\subsection{Erstzugriff über Keycloak und CyberRangeCZ-Portal}
+\label{sec:poc-webzugriff}
+
+CyberRangeCZ verwendet für Authentifizierung und Benutzer- und Client-Verwaltung typischerweise
+Keycloak als Identity- und Access-Management-Komponente. Der erfolgreiche Zugriff auf die
+Keycloak-Verwaltungskonsole bestätigt, dass die Authentifizierungs- und Basisdienste funktionsfähig
+bereitgestellt wurden (Abbildung~\ref{fig:poc-keycloak}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{poc_keycloak.png}
+    \caption{Keycloak-Verwaltungskonsole der PoC-Installation (eigene Aufnahme)}
+    \label{fig:poc-keycloak}
+\end{figure}
+
+Der zentrale Einstiegspunkt für Trainings- und Sandbox-Management ist das CyberRangeCZ Platform
+Portal. Abbildung~\ref{fig:poc-portal} zeigt die Startseite mit den wichtigsten Funktionen, unter
+anderem Trainingsdefinitionen, Trainingsinstanzen, Sandboxes, Pools sowie Benutzer- und
+Gruppenverwaltung.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{poc_portal_home.png}
+    \caption{CyberRangeCZ Platform Portal (Startseite) nach erfolgreichem Login (eigene Aufnahme)}
+    \label{fig:poc-portal}
+\end{figure}
+
+\subsection{Import einer Trainingsdefinition und Provisionierung einer Sandbox}
+\label{sec:poc-training-import}
+
+Um die Kernfunktionalität der Plattform zu validieren, wurde eine Beispiel-Trainingsbibliothek
+(\texttt{library-demo-training}) aus einem Git-Repository in das Portal eingebunden
+\cite{CyberRangeCZLibraryDemoTraining}. Nach dem Import wurde ein Pool beziehungsweise eine
+Trainingsinstanz erstellt und die Sandbox-Provisionierung ausgelöst. Die resultierende
+Netzwerktopologie der bereitgestellten Umgebung ist in Abbildung~\ref{fig:poc-topology} dargestellt.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\linewidth]{poc_topology.png}
+    \caption{Netzwerktopologie einer bereitgestellten Demo-Sandbox (eigene Aufnahme)}
+    \label{fig:poc-topology}
+\end{figure}
+
+\subsection{Zugriff auf die Sandbox und funktionaler Verbindungstest}
+\label{sec:poc-zugriff}
+
+Für den Zugriff auf die bereitgestellten Systeme stellt CyberRangeCZ im PoC automatisch erzeugte
+SSH-Artefakte zur Verfügung. Dazu gehören typischerweise eine Benutzer-Konfiguration sowie ein
+passender privater und öffentlicher Schlüssel. Abbildung~\ref{fig:poc-ssh-files} zeigt die
+entsprechenden Dateien, die nach der Sandbox-Provisionierung bereitgestellt wurden.
+
+Neben SSH sind in Cyber-Range-Umgebungen grundsätzlich auch weitere Zugriffsmöglichkeiten relevant,
+insbesondere wenn Trainings- oder Forschungsszenarien eine grafische Interaktion erfordern. Je nach
+Szenariodefinition kann der Zugriff daher auch über browserbasierte Oberflächen oder GUI-Zugriffe
+erfolgen, etwa über eine Web-Konsole oder Remote-Desktop-Mechanismen wie RDP, VNC oder noVNC. Welche
+Zugriffspfade tatsächlich verfügbar sind, hängt von der jeweiligen Trainingsdefinition und der
+bereitgestellten Infrastruktur ab.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\linewidth]{poc_ssh_files.png}
+    \caption{SSH-Daten für den Sandbox-Zugriff (eigene Aufnahme)}
+    \label{fig:poc-ssh-files}
+\end{figure}
+
+Zur Verifikation, dass der Zugriff auf die Sandbox tatsächlich funktioniert und Netzwerkkommunikation
+möglich ist, wurde aus der bereitgestellten Client-Umgebung ein einfacher Scan gegen das
+Server-System durchgeführt. Abbildung~\ref{fig:poc-nmap} zeigt exemplarisch, dass das Zielsystem
+erreichbar und SSH (Port 22) offen ist. Damit ist die grundlegende Nutzbarkeit der bereitgestellten
+Umgebung für weitere Schritte nachgewiesen.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\linewidth]{poc_nmap.png}
+    \caption{Einfacher Funktionstest innerhalb der Sandbox (eigene Aufnahme)}
+    \label{fig:poc-nmap}
+\end{figure}
+
+\subsection{Erkenntnisse aus dem PoC}
+\label{sec:poc-erkenntnisse}
+
+Der PoC bestätigt, dass CyberRangeCZ in der Lite-Variante in einer lokalen Umgebung installiert und
+betrieben werden kann und dabei zentrale Plattformmechanismen sichtbar werden: versionierbare
+Trainingsdefinitionen, Portal-gestützte Verwaltung sowie automatisierte Provisionierung isolierter
+Umgebungen. Besonders relevant ist, dass sich eine Trainingsdefinition aus einem Git-Repository
+importieren und anschließend reproduzierbar als Sandbox instanziieren lässt.
+
+Für die weitere Arbeit ergibt sich daraus als nächster Schritt, die Erprobung in Richtung
+Tool-Integration zu vertiefen. Konkret bedeutet das, Mess- und Beobachtungspunkte (Logs, Metriken,
+Netzwerkdaten) in einem Use Case gezielt zu platzieren und den Aufwand für die Integration und den
+Vergleich mehrerer Sicherheits- oder Monitoring-Werkzeuge realistisch abzuschätzen.
+
+\section{Proof of Concept: OCR}
+\label{sec:poc-ocr}
+
+Neben CyberRangeCZ wurde mit Open Cyber Range (OCR) eine zweite quelloffene Plattform praktisch
+evaluiert. Im Vordergrund stand auch hier kein Produktivbetrieb, sondern ein nachvollziehbarer PoC,
+der zeigt, ob sich OCR auf einem Host deployen lässt und wie die Architektur in der Praxis handhabbar
+ist.
+
+Im Unterschied zu vielen ``All-in-one''-Trainingsplattformen ist OCR nicht als monolithisches
+Webprodukt konzipiert, sondern als Baukastensystem aus mehreren Diensten, die gemeinsam den
+Lebenszyklus einer Übung abdecken: (1) Verwaltung und Distribution von Übungsartefakten, (2)
+Orchestrierung und Zustandsverwaltung von Deployments, (3) Anbindung an eine konkrete Infrastruktur
+(Virtualisierung oder Cloud) sowie (4) Identity- und Access-Management. Diese modulare Architektur
+ist für die Forschung prinzipiell attraktiv, erhöht im Self-Hosted-Betrieb jedoch den
+Integrationsaufwand erheblich, da mehrere Komponenten konsistent konfiguriert und miteinander
+verbunden werden müssen \cite{OCRDeputyRepo,OCRCZRangerDoc}.
+
+Für den PoC wurden die Kernkomponenten Deputy und Ranger betrachtet. Deputy fungiert als digitale
+Bibliothek für Szenarioinhalte. Artefakte wie Packages, Templates oder vorbereitete
+Übungskomponenten werden dort versioniert abgelegt und können von anderen OCR-Komponenten abgerufen
+werden \cite{OCRDeputyRepo,OCRCZFirstDeputyPackage}.
+
+Die Ranger-Komponente bildet die Control Plane für die Ausführung. Sie verwaltet den Zustand einer
+Übung und koordiniert das Ausrollen in eine Zielumgebung. Entscheidend ist dabei, dass Ranger die
+Infrastruktur nicht selbst erzeugt, sondern die Provisionierung an umgebungsspezifische Handler und
+Deployer delegiert. Für OpenStack existiert dafür ein eigener Handler als separates Projekt
+\cite{OCROpenstackHandler}.
+
+\subsection{Testumgebung}
+\label{sec:poc-ocr-testumgebung}
+
+Der PoC wurde auf einer dedizierten Maschine mit Ubuntu 24.04 LTS durchgeführt. Die verwendeten
+Ressourcen (CPU, RAM und Storage) sind in Abbildung~\ref{fig:poc-ocr-hardware} dargestellt.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{poc_ocr_hardware.png}
+    \caption{Testumgebung für den OCR-PoC (eigene Aufnahme)}
+    \label{fig:poc-ocr-hardware}
+\end{figure}
+
+\subsection{Installation und Deployment der PoC-Umgebung}
+\label{sec:poc-ocr-installation}
+
+Die Installation orientierte sich an der offiziellen Cyber-Range-Dokumentation für die
+OCR-Komponenten Deputy und Ranger \cite{OCRCZRangerDoc,OCRCZFirstDeputyPackage}. In der praktischen
+Umsetzung traten allerdings viele Probleme auf, die nicht in der Dokumentation standen. Der
+Ranger-Service prüft beim Start die Konfiguration zum Beispiel strikt auf Vollständigkeit und
+korrekte Datentypen. Fehlende Pflichtfelder, etwa für Deployer- und Deployment-Strukturen, führten
+daher zu wiederholten Startabbrüchen und Neustartschleifen.
+
+\subsubsection{Deployment von Deputy}
+\label{subsec:poc-ocr-deputy}
+
+Deputy wurde als erster Baustein gestartet, da Ranger für den späteren Betrieb typischerweise
+Artefakte über Deputy bezieht. Der Start erfolgte über Docker Compose.
+Abbildung~\ref{fig:poc-ocr-deputy-up} dokumentiert den erfolgreichen Image-Pull und die laufenden
+Container.
+
+\begin{verbatim}
+cd /opt/ocr/deputy
+docker compose up -d
+docker ps
+\end{verbatim}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{poc_ocr_deputy_up.png}
+    \caption{Deputy: erfolgreicher Start der Services (eigene Aufnahme)}
+    \label{fig:poc-ocr-deputy-up}
+\end{figure}
+
+\subsubsection{Deployment der Ranger-Komponente}
+\label{subsec:poc-ocr-ranger}
+
+Im nächsten Schritt wurde die Ranger-Komponente deployt. In der Praxis erwies sich dieser Teil als
+deutlich aufwändiger als erwartet, da Ranger bereits im Minimalbetrieb strikte Anforderungen an die
+Konfiguration stellt. Ranger validiert beim Start eine Reihe verpflichtender Felder und Datentypen.
+Fehlen diese Angaben oder passen sie nicht exakt, beendet sich der Dienst sofort mit Fehlermeldungen.
+
+Der Start und der Containerstatus sind in Abbildung~\ref{fig:poc-ocr-ranger-up} dokumentiert.
+Abbildung~\ref{fig:poc-ocr-ranger-logs} zeigt den erfolgreichen Start über die Logmeldungen des
+Webservers.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{poc_ocr_ranger_up.png}
+    \caption{Ranger-Komponente (eigene Aufnahme)}
+    \label{fig:poc-ocr-ranger-up}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{poc_ocr_ranger_logs.png}
+    \caption{Ranger-Komponente: erfolgreicher Start (eigene Aufnahme)}
+    \label{fig:poc-ocr-ranger-logs}
+\end{figure}
+
+Im Rahmen des Vorprojekts konnte der PoC für OCR in der verfügbaren Zeit nicht bis zu einem
+lauffähigen Trainings- oder Deployment-Start abgeschlossen werden. Zentrale Komponenten (Deputy und
+Ranger) konnten zwar grundsätzlich gestartet werden, doch die praktische Integration der modularen
+OCR-Architektur erwies sich als deutlich komplexer als erwartet, da mehrere Dienste, unter anderem
+das Identity- und Access-Management, konfiguriert und miteinander abgestimmt werden müssen.
+Zusätzlich setzt die eigentliche Bereitstellung von Übungsumgebungen eine angebundene
+Virtualisierungs- oder Cloud-Infrastruktur voraus, etwa eine eigene OpenStack-Umgebung oder
+alternativ VMware/ESXi über passende Handler und Deployer. Der PoC bleibt daher auf den erfolgreichen
+Aufbau der Basisdienste und die technische Erkundung der Architektur beschränkt.
